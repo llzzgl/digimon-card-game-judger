@@ -1,0 +1,28 @@
+# Core RAG
+langchain==0.1.20
+langchain-community==0.0.38
+langchain-openai==0.1.6
+langchain-google-genai==1.0.3
+google-generativeai>=0.3.0
+
+# Vector Store
+chromadb==0.4.24
+
+# PDF Processing
+pypdf==4.2.0
+pdfplumber==0.11.0
+
+# API
+fastapi==0.111.0
+uvicorn==0.29.0
+python-multipart==0.0.9
+
+# Web UI
+streamlit==1.35.0
+
+# Embeddings (可选用本地模型)
+sentence-transformers==2.7.0
+
+# Utils
+python-dotenv==1.0.1
+pydantic>=2.9.0

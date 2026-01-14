@@ -1,0 +1,614 @@
+[
+  {
+    "pack_id": "503035",
+    "pack_name": "ブースターパック TIME STRANGER【BT-24】",
+    "pack_code": "BT-24",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503035",
+    "card_count": 200,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503034",
+    "pack_name": "ブースターパック HACKERS' SLUMBER【BT-23】",
+    "pack_code": "BT-23",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503034",
+    "card_count": 178,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503033",
+    "pack_name": "エクストラブースター SINISTER ORDER【EX-10】",
+    "pack_code": "EX-10",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503033",
+    "card_count": 231,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503032",
+    "pack_name": "ブースターパック　CYBER EDEN【BT-22】",
+    "pack_code": "BT-22",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503032",
+    "card_count": 167,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503031",
+    "pack_name": "エクストラブースター VERSUS MONSTERS【EX-09】",
+    "pack_code": "EX-09",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503031",
+    "card_count": 183,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503030",
+    "pack_name": "ブースターパック WORLD CONVERGENCE【BT-21】",
+    "pack_code": "BT-21",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503030",
+    "card_count": 172,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503029",
+    "pack_name": "ブースターパック OVER THE X【BT-20】",
+    "pack_code": "BT-20",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503029",
+    "card_count": 201,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503028",
+    "pack_name": "エクストラブースター CHAIN OF LIBERATION【EX-08】",
+    "pack_code": "EX-08",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503028",
+    "card_count": 217,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503027",
+    "pack_name": "ブースターパック クロスエボリューション【BT-19】",
+    "pack_code": "BT-19",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503027",
+    "card_count": 190,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503026",
+    "pack_name": "ブースターパック エレメントサクセサー【BT-18】",
+    "pack_code": "BT-18",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503026",
+    "card_count": 150,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503025",
+    "pack_name": "エクストラブースター デジモンリベレイター【EX-07】",
+    "pack_code": "EX-07",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503025",
+    "card_count": 170,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503024",
+    "pack_name": "ブースターパック シークレットクライシス【BT-17】",
+    "pack_code": "BT-17",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503024",
+    "card_count": 212,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503023",
+    "pack_name": "テーマブースター インファナル・アセンション【EX-06】",
+    "pack_code": "EX-06",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503023",
+    "card_count": 122,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503022",
+    "pack_name": "ブースターパック BEGINNING OBSERVER 【BT-16】",
+    "pack_code": "BT-16",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503022",
+    "card_count": 159,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503021",
+    "pack_name": "ブースターパック エクシード・アポカリプス【BT-15】",
+    "pack_code": "BT-15",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503021",
+    "card_count": 153,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503020",
+    "pack_name": "テーマブースター アニマルコロシアム【EX-05】",
+    "pack_code": "EX-05",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503020",
+    "card_count": 132,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503019",
+    "pack_name": "ブースターパック BLAST ACE【BT-14】",
+    "pack_code": "BT-14",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503019",
+    "card_count": 149,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503018",
+    "pack_name": "ブースターパック VSロイヤルナイツ【BT-13】",
+    "pack_code": "BT-13",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503018",
+    "card_count": 162,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503017",
+    "pack_name": "リブートブースター ライジングウインド【RB-01】",
+    "pack_code": "RB-01",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503017",
+    "card_count": 192,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503016",
+    "pack_name": "テーマブースター オルタナティブビーイング【EX-04】",
+    "pack_code": "EX-04",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503016",
+    "card_count": 144,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503015",
+    "pack_name": "ブースターパック アクロス・タイム【BT-12】",
+    "pack_code": "BT-12",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503015",
+    "card_count": 173,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503014",
+    "pack_name": "ブースターパック ディメンショナルフェイズ【BT-11】",
+    "pack_code": "BT-11",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503014",
+    "card_count": 168,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503013",
+    "pack_name": "テーマブースター ドラゴンズロア【EX-03】",
+    "pack_code": "EX-03",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503013",
+    "card_count": 141,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503012",
+    "pack_name": "ブースターパック クロスエンカウンター【BT-10】",
+    "pack_code": "BT-10",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503012",
+    "card_count": 192,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503011",
+    "pack_name": "ブースターパック Xレコード【BT-09】",
+    "pack_code": "BT-09",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503011",
+    "card_count": 151,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503010",
+    "pack_name": "テーマブースター デジタルハザード【EX-02】",
+    "pack_code": "EX-02",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503010",
+    "card_count": 158,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503009",
+    "pack_name": "ブースターパック ニューヒーロー【BT-08】",
+    "pack_code": "BT-08",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503009",
+    "card_count": 162,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503008",
+    "pack_name": "ブースターパック ネクストアドベンチャー【BT-07】",
+    "pack_code": "BT-07",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503008",
+    "card_count": 164,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503007",
+    "pack_name": "テーマブースター クラシックコレクション【EX-01】",
+    "pack_code": "EX-01",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503007",
+    "card_count": 123,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503006",
+    "pack_name": "ブースターパック ダブルダイヤモンド【BT-06】",
+    "pack_code": "BT-06",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503006",
+    "card_count": 174,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503005",
+    "pack_name": "ブースターパック バトルオブオメガ【BT-05】",
+    "pack_code": "BT-05",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503005",
+    "card_count": 166,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503004",
+    "pack_name": "ブースターパック グレイトレジェンド【BT-04】",
+    "pack_code": "BT-04",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503004",
+    "card_count": 172,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503003",
+    "pack_name": "ブースターパック ユニオンインパクト【BT-03】",
+    "pack_code": "BT-03",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503003",
+    "card_count": 163,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503002",
+    "pack_name": "ブースターパック ULTIMATE POWER【BT-02】",
+    "pack_code": "BT-02",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503002",
+    "card_count": 133,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503001",
+    "pack_name": "ブースターパック NEW EVOLUTION【BT-01】",
+    "pack_code": "BT-01",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503001",
+    "card_count": 134,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503122",
+    "pack_name": "アドバンスデッキ 金剛界曼荼羅【ST-22】",
+    "pack_code": "ST-22",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503122",
+    "card_count": 51,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503121",
+    "pack_name": "スタートデッキ HERO OF HOPE【ST-21】",
+    "pack_code": "ST-21",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503121",
+    "card_count": 30,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503120",
+    "pack_name": "スタートデッキ PROTECTOR OF LIGHT【ST-20】",
+    "pack_code": "ST-20",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503120",
+    "card_count": 30,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503119",
+    "pack_name": "スタートデッキ 童話の舞踏【ST-19】",
+    "pack_code": "ST-19",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503119",
+    "card_count": 27,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503118",
+    "pack_name": "スタートデッキ 旋風の守護者【ST-18】",
+    "pack_code": "ST-18",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503118",
+    "card_count": 24,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503117",
+    "pack_name": "アドバンスデッキ ダブルタイフーン【ST-17】",
+    "pack_code": "ST-17",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503117",
+    "card_count": 33,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503116",
+    "pack_name": "スタートデッキ 友情の鋼狼【ST-16】",
+    "pack_code": "ST-16",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503116",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503115",
+    "pack_name": "スタートデッキ 勇気の戦竜【ST-15】",
+    "pack_code": "ST-15",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503115",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503114",
+    "pack_name": "アドバンスデッキ ベルゼブモン【ST-14】",
+    "pack_code": "ST-14",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503114",
+    "card_count": 41,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503113",
+    "pack_name": "スタートデッキ ラグナロードモン【ST-13】",
+    "pack_code": "ST-13",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503113",
+    "card_count": 35,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503112",
+    "pack_name": "スタートデッキ ジエスモン【ST-12】",
+    "pack_code": "ST-12",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503112",
+    "card_count": 25,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503111",
+    "pack_name": "スタートデッキ スペシャルエントリーセット【ST-11】",
+    "pack_code": "ST-11",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503111",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503110",
+    "pack_name": "スタートデッキ 異世界の軍師【ST-10】",
+    "pack_code": "ST-10",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503110",
+    "card_count": 20,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503109",
+    "pack_name": "スタートデッキ 究極の古代竜【ST-9】",
+    "pack_code": "ST-9",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503109",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503108",
+    "pack_name": "スタートデッキ アルフォースブイドラモン【ST-8】",
+    "pack_code": "ST-8",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503108",
+    "card_count": 18,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503107",
+    "pack_name": "スタートデッキ デュークモン【ST-7】",
+    "pack_code": "ST-7",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503107",
+    "card_count": 20,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503106",
+    "pack_name": "スタートデッキ ヴェノムヴァイオレット【ST-6】",
+    "pack_code": "ST-6",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503106",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503105",
+    "pack_name": "スタートデッキ ムゲンブラック【ST-5】",
+    "pack_code": "ST-5",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503105",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503104",
+    "pack_name": "スタートデッキ ギガグリーン【ST-4】",
+    "pack_code": "ST-4",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503104",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503103",
+    "pack_name": "スタートデッキ ヘブンズイエロー【ST-3】",
+    "pack_code": "ST-3",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503103",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503102",
+    "pack_name": "スタートデッキ コキュートスブルー【ST-2】",
+    "pack_code": "ST-2",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503102",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503101",
+    "pack_name": "スタートデッキ ガイアレッド【ST-1】",
+    "pack_code": "ST-1",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503101",
+    "card_count": 16,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503206",
+    "pack_name": "リミテッドカードパック ビリオン・バレット【LM-06】",
+    "pack_code": "LM-06",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503206",
+    "card_count": 37,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503205",
+    "pack_name": "リミテッドカードパック ファイナル・エリシオン【LM-05】",
+    "pack_code": "LM-05",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503205",
+    "card_count": 36,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503204",
+    "pack_name": "リミテッドカードパック トリッドヴァイス【LM-04】",
+    "pack_code": "LM-04",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503204",
+    "card_count": 55,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503203",
+    "pack_name": "リミテッドカードセット2024【LM-03】",
+    "pack_code": "LM-03",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503203",
+    "card_count": 19,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503202",
+    "pack_name": "リミテッドカードパック デクスモン【LM-02】",
+    "pack_code": "LM-02",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503202",
+    "card_count": 41,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503201",
+    "pack_name": "リミテッドカードパック デジモンゴーストゲーム【LM-01】",
+    "pack_code": "LM-01",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503201",
+    "card_count": 34,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503901",
+    "pack_name": "プロモーションカード",
+    "pack_code": "",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503901",
+    "card_count": 276,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503904",
+    "pack_name": "公式大会景品",
+    "pack_code": "",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503904",
+    "card_count": 78,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503905",
+    "pack_name": "店舗イベント景品",
+    "pack_code": "",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503905",
+    "card_count": 458,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503902",
+    "pack_name": "プレミアムバンダイ・イベント物販",
+    "pack_code": "",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503902",
+    "card_count": 404,
+    "created_at": "2026-01-14T10:41:34.638744"
+  },
+  {
+    "pack_id": "503903",
+    "pack_name": "その他物販",
+    "pack_code": "",
+    "release_date": null,
+    "pack_url": "https://digimoncard.com/cards/?search=true&category=503903",
+    "card_count": 22,
+    "created_at": "2026-01-14T10:41:34.638744"
+  }
+]

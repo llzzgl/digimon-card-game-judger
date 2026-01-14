@@ -1,0 +1,42 @@
+DTCG 规则书翻译工具 - 项目总结
+=====================================
+
+已创建的文件：
+--------------
+1. translate_rulebook.py - OpenAI GPT-4 翻译引擎
+2. translate_rulebook_gemini.py - Google Gemini 翻译引擎  
+3. run_translation.py - 简易启动器（推荐使用）
+4. TRANSLATION_README.md - 详细技术文档
+5. translate_comparison.md - 两个版本对比
+6. 翻译工具使用指南.md - 快速开始指南
+
+核心功能：
+----------
+✅ 自动从旧版中文规则书提取专有名词
+✅ 智能翻译日文规则书为中文
+✅ 保持术语一致性
+✅ 支持两种 AI 引擎（OpenAI 和 Gemini）
+✅ 自动分块处理长文本
+✅ 友好的命令行界面
+
+快速开始：
+----------
+1. 确保两个 PDF 文件在 card_game_judge 目录
+2. 配置 .env 文件中的 API Key
+3. 运行: python run_translation.py
+4. 选择翻译引擎
+5. 等待完成，查看输出文件
+
+推荐使用流程：
+--------------
+首次使用 → Gemini 版本（免费快速）
+质量要求高 → GPT-4 版本（付费但更准确）
+混合使用 → Gemini 翻译 + 人工校对关键部分
+
+注意事项：
+----------
+- 翻译结果需要人工审核
+- 特别注意专业术语的准确性
+- 建议先小规模测试
+- 确保网络稳定
+- 注意 API 配额限制
