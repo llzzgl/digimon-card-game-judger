@@ -1,3 +1,8 @@
 card_game_judge/data/chroma_db/chroma.sqlite3
 *.sqlite3
 digimon_cards_cn.json
+
+# 环境变量文件（包含 API Key）
+.env
+*.env
+!.env.example
