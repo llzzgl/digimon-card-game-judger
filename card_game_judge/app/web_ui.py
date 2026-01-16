@@ -7,9 +7,11 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", message=".*torch.classes.*")
+warnings.filterwarnings("ignore", message=".*Tried to instantiate class.*")
 
 # 抑制 streamlit 的 torch 警告日志
 logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").setLevel(logging.ERROR)
+logging.getLogger("streamlit.watcher.path_watcher").setLevel(logging.ERROR)
 
 import streamlit as st
 import sys
@@ -38,34 +40,113 @@ with st.sidebar:
     
     # 上传文件
     st.subheader("上传文件")
-    uploaded_file = st.file_uploader("选择 PDF 或文本文件", type=["pdf", "txt"])
+    uploaded_file = st.file_uploader("选择 PDF、TXT 或 JSON 文件", type=["pdf", "txt", "json"])
     file_doc_type = st.selectbox("文档类型", ["rule", "ruling", "case"], 
                                   format_func=lambda x: {"rule": "📘 规则", "ruling": "⚖️ 裁定", "case": "📋 判例"}[x],
                                   key="file_type")
-    file_title = st.text_input("文档标题", placeholder="例如：游戏王规则手册 v1.0", key="file_title")
+    file_title = st.text_input("文档标题", placeholder="例如：游戏王规则手册 v1.0（JSON可留空自动生成）", key="file_title")
     file_tags = st.text_input("标签（逗号分隔）", placeholder="例如：基础规则,战斗", key="file_tags")
     
     if st.button("📤 上传文件", type="primary", use_container_width=True):
         if uploaded_file is None:
             st.error("请选择文件")
-        elif not file_title.strip():
-            st.error("请输入文档标题")
         else:
             try:
                 content = uploaded_file.read()
-                text = extract_text_from_bytes(content, uploaded_file.name)
-                if not text.strip():
-                    st.error("无法从文件中提取文本")
+                filename = uploaded_file.name
+                
+                # JSON 文件特殊处理（卡牌数据）
+                if filename.endswith('.json'):
+                    import json
+                    import time
+                    json_data = json.loads(content.decode('utf-8'))
+                    
+                    # 判断是卡牌数组还是单个对象
+                    cards = json_data if isinstance(json_data, list) else [json_data]
+                    total = len(cards)
+                    
+                    # 后台日志
+                    print(f"\n{'='*50}")
+                    print(f"📤 开始导入 JSON 文件: {filename}")
+                    print(f"   共 {total} 条卡牌数据")
+                    print(f"{'='*50}")
+                    
+                    # UI 进度条
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    success_count = 0
+                    start_time = time.time()
+                    
+                    for i, card in enumerate(cards):
+                        # 提取卡牌信息生成文本
+                        card_text_parts = []
+                        card_name = card.get('name', card.get('card_name', ''))
+                        card_no = card.get('card_no', card.get('number', ''))
+                        
+                        for key, value in card.items():
+                            if value and str(value).strip():
+                                card_text_parts.append(f"{key}: {value}")
+                        
+                        card_text = "\n".join(card_text_parts)
+                        if not card_text.strip():
+                            print(f"   ⚠️ [{i+1}/{total}] 跳过空卡牌")
+                            continue
+                        
+                        title = file_title.strip() if file_title.strip() else f"{card_no} {card_name}".strip()
+                        metadata = DocumentMetadata(
+                            doc_type=DocumentType(file_doc_type),
+                            title=title,
+                            tags=[t.strip() for t in file_tags.split(",") if t.strip()] + ([card_no] if card_no else [])
+                        )
+                        result = vector_store.add_document(card_text, metadata)
+                        success_count += 1
+                        
+                        # 更新进度
+                        progress = (i + 1) / total
+                        progress_bar.progress(progress)
+                        status_text.text(f"导入中... {i+1}/{total} - {title}")
+                        
+                        # 后台日志（每10条或最后一条）
+                        if (i + 1) % 10 == 0 or i == total - 1:
+                            elapsed = time.time() - start_time
+                            print(f"   ✓ [{i+1}/{total}] {title} ({result['chunk_count']} chunks) - {elapsed:.1f}s")
+                    
+                    elapsed = time.time() - start_time
+                    progress_bar.empty()
+                    status_text.empty()
+                    
+                    print(f"{'='*50}")
+                    print(f"✅ 导入完成！成功 {success_count}/{total}，耗时 {elapsed:.1f}s")
+                    print(f"{'='*50}\n")
+                    
+                    st.success(f"JSON 导入成功！共导入 {success_count} 条卡牌数据，耗时 {elapsed:.1f}s")
                 else:
-                    metadata = DocumentMetadata(
-                        doc_type=DocumentType(file_doc_type),
-                        title=file_title.strip(),
-                        tags=[t.strip() for t in file_tags.split(",") if t.strip()]
-                    )
-                    result = vector_store.add_document(text, metadata)
-                    st.success(f"上传成功！文档ID: {result['doc_id']}, 分块数: {result['chunk_count']}")
+                    # PDF/TXT 处理
+                    if not file_title.strip():
+                        st.error("请输入文档标题")
+                    else:
+                        print(f"\n📤 开始上传文件: {filename}")
+                        
+                        text = extract_text_from_bytes(content, filename)
+                        if not text.strip():
+                            st.error("无法从文件中提取文本")
+                            print(f"   ❌ 无法提取文本")
+                        else:
+                            metadata = DocumentMetadata(
+                                doc_type=DocumentType(file_doc_type),
+                                title=file_title.strip(),
+                                tags=[t.strip() for t in file_tags.split(",") if t.strip()]
+                            )
+                            result = vector_store.add_document(text, metadata)
+                            
+                            print(f"   ✅ 上传成功: {file_title.strip()}")
+                            print(f"      文档ID: {result['doc_id']}, 分块数: {result['chunk_count']}\n")
+                            
+                            st.success(f"上传成功！文档ID: {result['doc_id']}, 分块数: {result['chunk_count']}")
             except Exception as e:
                 import traceback
+                print(f"   ❌ 上传失败: {str(e)}")
                 st.error(f"上传失败: {str(e)}\n{traceback.format_exc()}")
     
     st.divider()
