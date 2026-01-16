@@ -1,7 +1,7 @@
 # Digimon Card Game Judger
 
 基于 RAG 的数码宝贝卡牌游戏智能裁判系统。
-
+使用规则书和QA进行微调
 
 
 ## 项目结构
