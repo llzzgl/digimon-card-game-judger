@@ -224,10 +224,16 @@
             </div>
 
             <div id="answer-section" class="card">
-                <h2>📝 裁判回答</h2>
+                <div id="cards-section" style="display:none; margin-bottom: 20px;">
+                    <h2>🎴 卡牌效果（数据库原文）</h2>
+                    <div id="cards-list" style="background: rgba(0,100,0,0.1); border: 1px solid rgba(0,200,0,0.3); border-radius: 8px; padding: 16px; margin-top: 12px;"></div>
+                </div>
+                
+                <h2>⚖️ AI 分析 <span style="font-size: 0.7em; color: #f90; font-weight: normal;">（仅供参考，复杂情况请以官方裁定为准）</span></h2>
                 <div id="answer" class="answer-content"></div>
-                <div class="sources">
-                    <h3>📚 参考来源 (点击展开)</h3>
+                
+                <div class="sources" style="margin-top: 20px;">
+                    <h3>📚 规则参考 (点击展开)</h3>
                     <div id="sources-list"></div>
                 </div>
             </div>
@@ -311,18 +317,41 @@
                 
                 const data = await res.json();
                 
-                // 显示回答
+                // 显示卡牌数据（直接从数据库，100%准确）
+                const cardsSection = document.getElementById('cards-section');
+                const cardsList = document.getElementById('cards-list');
+                if (data.cards && data.cards.length > 0) {
+                    cardsList.innerHTML = data.cards.map(card => `
+                        <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-weight: bold; color: #4fc3f7; margin-bottom: 8px;">
+                                ${escapeHtml(card.title || card.card_no)}
+                            </div>
+                            <div style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.6; color: #ddd;">
+                                ${escapeHtml(card.content)}
+                            </div>
+                        </div>
+                    `).join('');
+                    cardsSection.style.display = 'block';
+                } else {
+                    cardsSection.style.display = 'none';
+                }
+                
+                // 显示 LLM 分析
                 document.getElementById('answer').innerHTML = formatAnswer(data.answer);
                 
-                // 显示来源
+                // 显示规则来源
                 const sourcesList = document.getElementById('sources-list');
-                sourcesList.innerHTML = data.sources.map((s, i) => `
-                    <div class="source-item" onclick="this.classList.toggle('expanded')">
-                        <div class="source-title">${getTypeIcon(s.doc_type)} ${s.title || '未知来源'}</div>
-                        <div class="source-type">${getTypeName(s.doc_type)}</div>
-                        <div class="source-excerpt">${escapeHtml(s.excerpt)}</div>
-                    </div>
-                `).join('');
+                if (data.sources && data.sources.length > 0) {
+                    sourcesList.innerHTML = data.sources.map((s, i) => `
+                        <div class="source-item" onclick="this.classList.toggle('expanded')">
+                            <div class="source-title">${getTypeIcon(s.doc_type)} ${s.title || '未知来源'}</div>
+                            <div class="source-type">${getTypeName(s.doc_type)}</div>
+                            <div class="source-excerpt">${escapeHtml(s.excerpt)}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    sourcesList.innerHTML = '<p style="color:#888">无规则参考</p>';
+                }
                 
                 answerSection.classList.add('show');
                 status.innerHTML = `✅ 完成 (${elapsed}s)`;

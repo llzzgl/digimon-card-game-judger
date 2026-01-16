@@ -114,60 +114,74 @@ async def query(request: QueryRequest):
     """
     from app.query_processor import query_processor
     
-    all_docs = []
-    seen_contents = set()  # 用于去重
+    card_docs = []  # 卡牌数据（直接显示）
+    rule_docs_list = []  # 规则数据（给LLM分析）
+    seen_contents = set()
     
     # 1. 提取卡牌编号并精确检索
     card_numbers = query_processor.extract_card_numbers(request.question)
     if card_numbers:
         print(f"[检索] 发现卡牌编号: {card_numbers}")
         for card_no in card_numbers:
-            # 使用精确文本匹配搜索卡牌
-            card_docs = vector_store.search_by_card_number(card_no, translate_result=True)
-            print(f"[检索] {card_no} 找到 {len(card_docs)} 条结果")
-            for doc in card_docs:
+            results = vector_store.search_by_card_number(card_no, translate_result=True)
+            print(f"[检索] {card_no} 找到 {len(results)} 条结果")
+            for doc in results:
                 content_hash = hash(doc["content"][:100])
                 if content_hash not in seen_contents:
                     seen_contents.add(content_hash)
-                    all_docs.append(doc)
+                    card_docs.append(doc)
     
     # 2. 对原始问题进行语义检索（规则相关）
-    rule_docs = vector_store.search(
+    rule_results = vector_store.search(
         query=request.question,
         doc_types=request.doc_types,
         top_k=request.top_k,
         translate_result=True
     )
-    for doc in rule_docs:
+    for doc in rule_results:
         content_hash = hash(doc["content"][:100])
         if content_hash not in seen_contents:
             seen_contents.add(content_hash)
-            all_docs.append(doc)
+            rule_docs_list.append(doc)
     
-    # 限制总数，但确保卡牌信息优先
-    max_docs = request.top_k + len(card_numbers) * 2
-    all_docs = all_docs[:max_docs]
+    # 合并所有文档给 LLM（只传规则，不传卡牌，避免 LLM 编造）
+    # 卡牌数据已经在前端直接显示了
+    all_docs_for_llm = rule_docs_list  # 只传规则文档
     
-    if not all_docs:
+    if not card_docs and not rule_docs_list:
         return QueryResponse(
-            answer="抱歉，我在知识库中没有找到与您问题相关的信息。请确保已上传相关规则文档。",
-            sources=[]
+            answer="抱歉，我在知识库中没有找到与您问题相关的信息。",
+            sources=[],
+            cards=[]
         )
     
-    # 生成回答
-    answer = llm_service.generate_answer(request.question, all_docs)
+    # LLM 只做规则分析（不传卡牌数据，避免它编造效果）
+    if all_docs_for_llm:
+        answer = llm_service.generate_answer(request.question, all_docs_for_llm)
+    else:
+        answer = "已找到相关卡牌数据（见上方）。如需规则裁定分析，请确保已导入规则文档。"
     
-    # 整理来源信息 - 显示实际搜索到的内容
+    # 卡牌数据直接返回（前端直接显示，不依赖LLM）
+    cards = [
+        {
+            "card_no": doc["metadata"].get("card_no", doc["metadata"].get("title", "")),
+            "title": doc["metadata"].get("title", ""),
+            "content": doc["content"]
+        }
+        for doc in card_docs
+    ]
+    
+    # 规则来源
     sources = [
         {
             "title": doc["metadata"].get("title", ""),
             "doc_type": doc.get("doc_type", ""),
-            "excerpt": doc["content"][:500] + "..." if len(doc["content"]) > 500 else doc["content"]
+            "excerpt": doc["content"][:300] + "..." if len(doc["content"]) > 300 else doc["content"]
         }
-        for doc in all_docs
+        for doc in rule_docs_list
     ]
     
-    return QueryResponse(answer=answer, sources=sources)
+    return QueryResponse(answer=answer, sources=sources, cards=cards)
 
 
 @app.get("/documents", summary="列出所有文档")

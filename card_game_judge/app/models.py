@@ -31,8 +31,9 @@ class QueryRequest(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    answer: str
-    sources: List[dict]
+    answer: str  # LLM 的规则分析
+    sources: List[dict]  # 搜索到的原始数据
+    cards: List[dict] = []  # 卡牌数据（直接显示，不经过LLM）
     confidence: Optional[float] = None
 
 

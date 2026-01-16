@@ -9,41 +9,38 @@ import httpx
 
 from app.config import LLM_MODEL, OPENAI_API_KEY, GOOGLE_API_KEY
 
-# 如果需要代理访问 Google API，取消下面的注释并修改代理地址
-os.environ["HTTP_PROXY"] = "http://127.0.0.1:7897"
-os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7897"
+# 通义千问 API Key
+DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
 
-# 配置更短的超时时间
-DEFAULT_TIMEOUT = httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)
+# 如果需要代理访问 Google API
+if os.getenv("USE_PROXY", "").lower() == "true":
+    os.environ["HTTP_PROXY"] = f"http://{os.getenv('PROXY_HOST', '127.0.0.1')}:{os.getenv('PROXY_PORT', '7897')}"
+    os.environ["HTTPS_PROXY"] = f"http://{os.getenv('PROXY_HOST', '127.0.0.1')}:{os.getenv('PROXY_PORT', '7897')}"
 
 
-SYSTEM_PROMPT = """你是数码宝贝卡牌游戏（DTCG）裁判。
+SYSTEM_PROMPT = """你是数码宝贝卡牌游戏（DTCG）裁判助手。
 
-【关于卡牌效果 - 严格要求】
-1. 引用卡牌效果时，必须从【参考资料】中原文复制，一字不改
-2. 绝对禁止编造、翻译、猜测或修改卡牌效果文本
-3. 如果参考资料中没有某张卡牌的数据，明确说"参考资料中未提供该卡牌数据"
-4. 卡牌效果必须用中文（参考资料是中文的）
+【重要提醒】
+- 卡牌效果已在界面上单独显示，你不需要列出卡牌效果
+- 你的分析仅供参考，复杂情况请以官方裁定为准
+- 如果规则参考中没有直接相关的规则，请明确说明"规则参考中未找到直接相关条款"
 
-【关于规则裁定 - 你可以分析】
-1. 根据参考资料中的规则文档分析效果处理顺序
-2. 判断效果的发动时机和条件
-3. 解释规则的适用情况
-4. 给出裁定结论
+【你的任务】
+根据下方【规则参考】分析玩家的问题，重点关注：
+1. 效果的触发时机（什么时候触发）
+2. 效果的处理顺序（先处理什么，后处理什么）
+3. 给出裁定建议
 
-【回答格式】
-1. 先列出涉及的卡牌效果（直接复制参考资料原文）
-2. 分析效果发动时机和处理顺序
-3. 给出裁定结论
-
-【参考资料】
+【规则参考】
 {context}
+
+如果规则参考不足以回答问题，请诚实说明。
 """
 
 USER_PROMPT = """【问题】
 {question}
 
-请根据参考资料回答。引用卡牌效果时必须原文复制，不要改写或翻译。"""
+请根据规则参考分析。如果规则参考不足，请说明。"""
 
 
 class LLMService:
@@ -61,12 +58,23 @@ class LLMService:
         elif LLM_MODEL == "gemini":
             return ChatGoogleGenerativeAI(
                 model="gemini-2.5-flash", 
-                temperature=0,  # 降到0，减少编造
+                temperature=0,
                 google_api_key=GOOGLE_API_KEY,
                 timeout=60,
                 max_retries=2
             )
+        elif LLM_MODEL == "qwen":
+            # 通义千问 - 使用 OpenAI 兼容接口
+            return ChatOpenAI(
+                model="qwen-flash",  # 可选: qwen-turbo, qwen-plus, qwen-max
+                temperature=0,
+                openai_api_key=DASHSCOPE_API_KEY,
+                openai_api_base="https://dashscope.aliyuncs.com/compatible-mode/v1",
+                timeout=60,
+                max_retries=2
+            )
         else:
+            # OpenAI
             return ChatOpenAI(
                 model="gpt-4o-mini",
                 temperature=0,
