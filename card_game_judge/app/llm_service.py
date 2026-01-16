@@ -5,6 +5,7 @@ from langchain.prompts import ChatPromptTemplate
 from typing import List
 import time
 import os
+import httpx
 
 from app.config import LLM_MODEL, OPENAI_API_KEY, GOOGLE_API_KEY
 
@@ -12,39 +13,37 @@ from app.config import LLM_MODEL, OPENAI_API_KEY, GOOGLE_API_KEY
 os.environ["HTTP_PROXY"] = "http://127.0.0.1:7897"
 os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7897"
 
+# 配置更短的超时时间
+DEFAULT_TIMEOUT = httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)
 
-SYSTEM_PROMPT = """你是一位专业的数码宝贝卡牌游戏（DTCG）裁判。你的职责是根据玩家描述的游戏场面，结合规则和卡牌效果，给出准确的裁定。
 
-【你的工作方式】
-1. 仔细分析玩家描述的场面状况
-2. 识别涉及的卡牌及其效果
-3. 根据规则判断效果的发动条件和处理顺序
-4. 给出清晰、有条理的裁定说明
+SYSTEM_PROMPT = """你是数码宝贝卡牌游戏（DTCG）裁判。
 
-【回答格式要求】
-1. 先列出涉及的卡牌及其关键效果
-2. 分析效果的发动时机和条件
-3. 按照正确的处理顺序说明每一步
-4. 如有多种可能的处理方式，分别说明
-5. 引用规则时标注来源，如「根据【参考1】...」
+【关于卡牌效果 - 严格要求】
+1. 引用卡牌效果时，必须从【参考资料】中原文复制，一字不改
+2. 绝对禁止编造、翻译、猜测或修改卡牌效果文本
+3. 如果参考资料中没有某张卡牌的数据，明确说"参考资料中未提供该卡牌数据"
+4. 卡牌效果必须用中文（参考资料是中文的）
 
-【重要规则提醒】
-- 效果处理遵循"先发动先处理"原则
-- 同时满足发动条件的效果，回合玩家优先选择处理顺序
-- 【登场时】【进化时】等时机效果在对应动作完成后发动
-- 连锁效果需要按照正确顺序逐一处理
+【关于规则裁定 - 你可以分析】
+1. 根据参考资料中的规则文档分析效果处理顺序
+2. 判断效果的发动时机和条件
+3. 解释规则的适用情况
+4. 给出裁定结论
+
+【回答格式】
+1. 先列出涉及的卡牌效果（直接复制参考资料原文）
+2. 分析效果发动时机和处理顺序
+3. 给出裁定结论
 
 【参考资料】
 {context}
 """
 
-USER_PROMPT = """【玩家提问】
+USER_PROMPT = """【问题】
 {question}
 
-请作为裁判，分析上述场面并给出裁定。要求：
-1. 列出涉及的卡牌效果
-2. 说明效果处理顺序
-3. 给出最终裁定结果"""
+请根据参考资料回答。引用卡牌效果时必须原文复制，不要改写或翻译。"""
 
 
 class LLMService:
@@ -58,18 +57,22 @@ class LLMService:
     
     def _init_llm(self):
         if LLM_MODEL == "local":
-            return Ollama(model="qwen2:7b", temperature=0.1)
+            return Ollama(model="qwen2:7b", temperature=0)
         elif LLM_MODEL == "gemini":
             return ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash",
-                temperature=0.1,
-                google_api_key=GOOGLE_API_KEY
+                model="gemini-2.5-flash", 
+                temperature=0,  # 降到0，减少编造
+                google_api_key=GOOGLE_API_KEY,
+                timeout=60,
+                max_retries=2
             )
         else:
             return ChatOpenAI(
                 model="gpt-4o-mini",
-                temperature=0.1,
-                openai_api_key=OPENAI_API_KEY
+                temperature=0,
+                openai_api_key=OPENAI_API_KEY,
+                timeout=60,
+                max_retries=2
             )
     
     def _call_llm(self, context: str, question: str) -> str:
@@ -97,14 +100,32 @@ class LLMService:
             doc_type = doc.get('doc_type', '')
             type_label = {"rule": "规则", "ruling": "官方裁定", "case": "判例"}.get(doc_type, "文档")
             
+            # 提取卡牌编号（如果有）
+            content = doc['content']
+            card_no = ""
+            if "card_no:" in content.lower():
+                import re
+                match = re.search(r'card_no:\s*([A-Z0-9-_]+)', content, re.IGNORECASE)
+                if match:
+                    card_no = f" [{match.group(1)}]"
+            
             context_parts.append(
-                f"【参考{i}】\n"
+                f"【参考{i}】{card_no}\n"
                 f"来源：{title}（{type_label}）\n"
-                f"内容：{doc['content']}\n"
+                f"内容：{content}\n"
             )
         
         context = "\n\n".join(context_parts)
         log(f"✅ 上下文构建完成，共 {len(context_docs)} 个参考文档，{len(context)} 字符")
+        
+        # 调试：打印实际传给 LLM 的上下文
+        print("=" * 60)
+        print("【调试】传给 LLM 的参考资料内容：")
+        print("=" * 60)
+        print(context[:2000])  # 只打印前2000字符
+        if len(context) > 2000:
+            print(f"... (共 {len(context)} 字符)")
+        print("=" * 60)
         
         # 步骤2: 调用 LLM
         log(f"🤖 步骤2/3: 调用 LLM ({LLM_MODEL})...")

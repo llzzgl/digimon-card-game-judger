@@ -685,7 +685,8 @@ class VectorDBManagerUI:
             
             gc.collect()
             
-            chroma_dir = Path(__file__).parent / "data" / "chroma_db"
+            # 使用项目根目录的 data/chroma_db
+            chroma_dir = Path(__file__).parent.parent / "data" / "chroma_db"
             if chroma_dir.exists():
                 shutil.rmtree(chroma_dir, ignore_errors=True)
                 self.log("向量数据库文件已删除")

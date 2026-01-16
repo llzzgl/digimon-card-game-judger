@@ -1,7 +1,10 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from typing import Optional, List
 import json
+import os
 
 from app.models import (
     DocumentType, DocumentMetadata, DocumentUpload,
@@ -25,10 +28,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 静态文件目录
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
-@app.get("/")
-async def root():
-    return {"message": "卡牌游戏智能裁判 API", "version": "1.0.0"}
+
+@app.get("/", include_in_schema=False)
+async def index():
+    """返回前端页面"""
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
 @app.post("/documents/upload", summary="上传文档（PDF/TXT/JSON）")
@@ -129,7 +136,6 @@ async def query(request: QueryRequest):
         query=request.question,
         doc_types=request.doc_types,
         top_k=request.top_k,
-        translate_query=True,
         translate_result=True
     )
     for doc in rule_docs:
@@ -151,12 +157,12 @@ async def query(request: QueryRequest):
     # 生成回答
     answer = llm_service.generate_answer(request.question, all_docs)
     
-    # 整理来源信息
+    # 整理来源信息 - 显示实际搜索到的内容
     sources = [
         {
             "title": doc["metadata"].get("title", ""),
-            "doc_type": doc["doc_type"],
-            "excerpt": doc["content"][:200] + "..." if len(doc["content"]) > 200 else doc["content"]
+            "doc_type": doc.get("doc_type", ""),
+            "excerpt": doc["content"][:500] + "..." if len(doc["content"]) > 500 else doc["content"]
         }
         for doc in all_docs
     ]

@@ -110,7 +110,8 @@ def batch_import_files(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="卡牌游戏智能裁判")
-    parser.add_argument("--no_ui", action="store_true", help="不启动 Web UI 界面")
+    parser.add_argument("--mode", type=str, default="web", choices=["web", "streamlit", "api"],
+                        help="启动模式: web(推荐,FastAPI+HTML), streamlit(旧UI), api(仅API)")
     parser.add_argument("--port", type=int, default=8000, help="端口号")
     
     # 批量导入参数
@@ -120,6 +121,9 @@ if __name__ == "__main__":
     parser.add_argument("--pattern", type=str, default="*.json", help="文件匹配模式")
     parser.add_argument("--remove-prefix", type=str, default="", help="从文件名移除的前缀")
     parser.add_argument("--remove-suffix", type=str, default="", help="从文件名移除的后缀")
+    
+    # 兼容旧参数
+    parser.add_argument("--no_ui", action="store_true", help="(已废弃) 使用 --mode api 代替")
     
     args = parser.parse_args()
     
@@ -137,19 +141,23 @@ if __name__ == "__main__":
             title_prefix=args.remove_prefix,
             title_suffix=args.remove_suffix
         )
-    elif not args.no_ui:
-        # 启动 Streamlit Web UI
+    elif args.no_ui or args.mode == "api":
+        # 仅 API 模式
+        print(f"🚀 启动 API 服务: http://localhost:{args.port}")
+        print(f"📖 API 文档: http://localhost:{args.port}/docs")
+        uvicorn.run("app.api:app", host="0.0.0.0", port=args.port, reload=False)
+    elif args.mode == "streamlit":
+        # Streamlit 模式 (旧UI，可能卡顿)
+        print("⚠️  Streamlit 模式可能会卡顿，推荐使用 --mode web")
         ui_path = os.path.join(script_dir, "app", "web_ui.py")
         env = os.environ.copy()
         env["PYTHONWARNINGS"] = "ignore"
         subprocess.run([sys.executable, "-m", "streamlit", "run", 
                        ui_path, "--server.port", str(args.port)], env=env)
     else:
-        # 启动 FastAPI
-        from app.api import app
-        uvicorn.run(
-            "app.api:app",
-            host="0.0.0.0",
-            port=args.port,
-            reload=True
-        )
+        # 默认: FastAPI + HTML 前端 (推荐)
+        print(f"🎴 卡牌游戏智能裁判")
+        print(f"🌐 打开浏览器访问: http://localhost:{args.port}")
+        print(f"📖 API 文档: http://localhost:{args.port}/docs")
+        print(f"⏳ 首次启动需要加载模型，请稍候...")
+        uvicorn.run("app.api:app", host="0.0.0.0", port=args.port, reload=False)

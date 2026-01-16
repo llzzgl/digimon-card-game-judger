@@ -122,8 +122,8 @@ def import_rule_files(file_paths=None):
 
 def rebuild_all():
     """重建全部向量数据库"""
-    # 清空现有向量库
-    CHROMA_DIR = os.path.join(os.path.dirname(__file__), "data", "chroma_db")
+    # 清空现有向量库 - 使用项目根目录的 data/chroma_db
+    CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "chroma_db")
     if os.path.exists(CHROMA_DIR):
         print(f"清空现有向量库: {CHROMA_DIR}")
         try:

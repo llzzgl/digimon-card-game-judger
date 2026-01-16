@@ -2,6 +2,7 @@
 import warnings
 import os
 import logging
+import sys
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -14,22 +15,43 @@ logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").set
 logging.getLogger("streamlit.watcher.path_watcher").setLevel(logging.ERROR)
 
 import streamlit as st
-import sys
 
-# 添加父目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app.vector_store import vector_store
-from app.pdf_processor import extract_text_from_bytes
-from app.llm_service import llm_service
-from app.models import DocumentType, DocumentMetadata
-from app.query_processor import query_processor
-
+# set_page_config 必须是第一个 Streamlit 命令
 st.set_page_config(
     page_title="卡牌游戏智能裁判",
     page_icon="🎴",
     layout="wide"
 )
+
+# 添加父目录到路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 使用 st.cache_resource 缓存重量级资源，避免重复加载
+@st.cache_resource
+def get_vector_store():
+    from app.vector_store import vector_store
+    # 预热 embedding 模型
+    _ = vector_store.embeddings
+    return vector_store
+
+@st.cache_resource
+def get_llm_service():
+    from app.llm_service import llm_service
+    return llm_service
+
+@st.cache_resource
+def get_query_processor():
+    from app.query_processor import query_processor
+    return query_processor
+
+# 显示加载状态
+with st.spinner("正在加载模型，首次启动可能需要几分钟..."):
+    vector_store = get_vector_store()
+    llm_service = get_llm_service()
+    query_processor = get_query_processor()
+
+from app.pdf_processor import extract_text_from_bytes
+from app.models import DocumentType, DocumentMetadata
 
 st.title("🎴 卡牌游戏智能裁判")
 st.caption("上传规则文档，然后向 AI 裁判提问")
@@ -232,7 +254,6 @@ with tab1:
                     query=question.strip(), 
                     doc_types=selected_types, 
                     top_k=top_k,
-                    translate_query=True,
                     translate_result=True
                 )
                 for doc in rule_docs:

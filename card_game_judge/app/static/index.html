@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎴 卡牌游戏智能裁判</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        header h1 {
+            font-size: 2.2em;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        header p {
+            color: #888;
+            font-size: 0.95em;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 {
+            font-size: 1.1em;
+            color: #4fc3f7;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 15px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4fc3f7;
+        }
+        textarea::placeholder { color: #666; }
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+            color: #000;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(79,195,247,0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            margin-left: 10px;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+        .actions { margin-top: 16px; display: flex; align-items: center; }
+        #status {
+            margin-left: 16px;
+            color: #888;
+            font-size: 0.9em;
+        }
+        .loading { display: inline-flex; align-items: center; gap: 8px; }
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: #4fc3f7;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #answer-section { display: none; }
+        #answer-section.show { display: block; }
+        .answer-content {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 20px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+        .answer-content p { margin-bottom: 12px; }
+        .sources { margin-top: 20px; }
+        .sources h3 {
+            font-size: 0.95em;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .source-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .source-item:hover { background: rgba(0,0,0,0.3); }
+        .source-title {
+            font-weight: 500;
+            color: #4fc3f7;
+            margin-bottom: 4px;
+        }
+        .source-type {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 6px;
+        }
+        .source-excerpt {
+            font-size: 0.85em;
+            color: #aaa;
+            display: none;
+        }
+        .source-item.expanded .source-excerpt { display: block; }
+        .error {
+            background: rgba(244,67,54,0.2);
+            border: 1px solid rgba(244,67,54,0.5);
+            color: #ff8a80;
+            padding: 14px;
+            border-radius: 8px;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .tab:hover { background: rgba(255,255,255,0.1); }
+        .tab.active {
+            background: rgba(255,255,255,0.1);
+            color: #4fc3f7;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(0,0,0,0.2);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        .stat-label {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 4px;
+        }
+        .doc-list { max-height: 400px; overflow-y: auto; }
+        .doc-item {
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .doc-item-title { color: #fff; font-weight: 500; }
+        .doc-item-meta { font-size: 0.85em; color: #888; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎴 卡牌游戏智能裁判</h1>
+            <p>基于规则手册、官方裁定和判例的智能问答系统</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="ask">💬 提问</button>
+            <button class="tab" data-tab="docs">📚 知识库</button>
+        </div>
+
+        <div id="tab-ask" class="tab-content active">
+            <div class="card">
+                <h2>💬 向裁判提问</h2>
+                <textarea id="question" placeholder="例如：当两张卡牌同时发动效果时，如何判断优先级？&#10;&#10;支持输入卡牌编号如 BT20-079 进行精确查询"></textarea>
+                <div class="actions">
+                    <button class="btn btn-primary" id="ask-btn" onclick="askQuestion()">🔍 提问</button>
+                    <button class="btn btn-secondary" onclick="clearAnswer()">清除</button>
+                    <span id="status"></span>
+                </div>
+            </div>
+
+            <div id="answer-section" class="card">
+                <h2>📝 裁判回答</h2>
+                <div id="answer" class="answer-content"></div>
+                <div class="sources">
+                    <h3>📚 参考来源 (点击展开)</h3>
+                    <div id="sources-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-docs" class="tab-content">
+            <div class="card">
+                <h2>📊 知识库统计</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-total">-</div>
+                        <div class="stat-label">文档总数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-rules">-</div>
+                        <div class="stat-label">规则文档</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-rulings">-</div>
+                        <div class="stat-label">裁定/判例</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="loadDocs()">🔄 刷新</button>
+            </div>
+            <div class="card">
+                <h2>📄 文档列表</h2>
+                <div id="doc-list" class="doc-list">
+                    <p style="color:#888">点击上方刷新按钮加载文档列表</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';  // 同源，留空即可
+        
+        // Tab 切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // 提问
+        async function askQuestion() {
+            const question = document.getElementById('question').value.trim();
+            if (!question) {
+                alert('请输入问题');
+                return;
+            }
+            
+            const btn = document.getElementById('ask-btn');
+            const status = document.getElementById('status');
+            const answerSection = document.getElementById('answer-section');
+            
+            btn.disabled = true;
+            status.innerHTML = '<span class="loading"><span class="spinner"></span>正在思考中...</span>';
+            answerSection.classList.remove('show');
+            
+            const body = {
+                question: question,
+                top_k: 5
+            };
+            
+            try {
+                const startTime = Date.now();
+                const res = await fetch(API_BASE + '/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                
+                const data = await res.json();
+                
+                // 显示回答
+                document.getElementById('answer').innerHTML = formatAnswer(data.answer);
+                
+                // 显示来源
+                const sourcesList = document.getElementById('sources-list');
+                sourcesList.innerHTML = data.sources.map((s, i) => `
+                    <div class="source-item" onclick="this.classList.toggle('expanded')">
+                        <div class="source-title">${getTypeIcon(s.doc_type)} ${s.title || '未知来源'}</div>
+                        <div class="source-type">${getTypeName(s.doc_type)}</div>
+                        <div class="source-excerpt">${escapeHtml(s.excerpt)}</div>
+                    </div>
+                `).join('');
+                
+                answerSection.classList.add('show');
+                status.innerHTML = `✅ 完成 (${elapsed}s)`;
+                
+            } catch (err) {
+                document.getElementById('answer').innerHTML = `<div class="error">❌ 查询失败: ${err.message}<br><br>请检查后端服务是否正常运行</div>`;
+                answerSection.classList.add('show');
+                status.innerHTML = '❌ 失败';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        function formatAnswer(text) {
+            // 简单的 Markdown 转换
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function getTypeIcon(type) {
+            return { rule: '📘', ruling: '⚖️', case: '📋' }[type] || '📄';
+        }
+        
+        function getTypeName(type) {
+            return { rule: '规则', ruling: '裁定', case: '判例' }[type] || type;
+        }
+        
+        function clearAnswer() {
+            document.getElementById('answer-section').classList.remove('show');
+            document.getElementById('question').value = '';
+        }
+        
+        // 加载文档列表
+        async function loadDocs() {
+            try {
+                const res = await fetch(API_BASE + '/documents');
+                const data = await res.json();
+                const docs = data.data || [];
+                
+                // 统计
+                document.getElementById('stat-total').textContent = docs.length;
+                const rules = docs.filter(d => d.doc_type === 'rule').length;
+                const others = docs.length - rules;
+                document.getElementById('stat-rules').textContent = rules;
+                document.getElementById('stat-rulings').textContent = others;
+                
+                // 列表
+                const list = document.getElementById('doc-list');
+                if (docs.length === 0) {
+                    list.innerHTML = '<p style="color:#888">知识库为空，请先上传文档</p>';
+                } else {
+                    list.innerHTML = docs.slice(0, 50).map(d => `
+                        <div class="doc-item">
+                            <div class="doc-item-title">${getTypeIcon(d.doc_type)} ${d.title || d.doc_id}</div>
+                            <div class="doc-item-meta">${d.chunk_count || 0} 个分块 · ${d.doc_type}</div>
+                        </div>
+                    `).join('');
+                    if (docs.length > 50) {
+                        list.innerHTML += `<p style="color:#888;text-align:center">... 还有 ${docs.length - 50} 个文档</p>`;
+                    }
+                }
+            } catch (err) {
+                document.getElementById('doc-list').innerHTML = `<div class="error">加载失败: ${err.message}</div>`;
+            }
+        }
+        
+        // 回车提交
+        document.getElementById('question').addEventListener('keydown', e => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                askQuestion();
+            }
+        });
+    </script>
+</body>
+</html>

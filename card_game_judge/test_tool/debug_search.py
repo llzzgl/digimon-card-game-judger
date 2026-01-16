@@ -14,7 +14,8 @@ import chromadb
 from app.query_processor import query_processor
 from app.terminology_translator import terminology_translator
 
-CHROMA_DIR = os.path.join(os.path.dirname(__file__), "data", "chroma_db")
+# 使用项目根目录的 data/chroma_db
+CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "chroma_db")
 
 # 测试问题
 question = "内存值为0时，支付4内存，在我方五级紫色数码兽上进化BT20-073，对面场上有BT23-058，该怎么处理效果？"

@@ -6,8 +6,12 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-# Paths
-CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", str(BASE_DIR / "data" / "chroma_db"))
+# Paths - 统一使用项目根目录的 data/chroma_db
+PROJECT_ROOT = BASE_DIR.parent
+CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", str(PROJECT_ROOT / "data" / "chroma_db"))
+# 处理相对路径
+if CHROMA_PERSIST_DIR.startswith(".."):
+    CHROMA_PERSIST_DIR = str((BASE_DIR / CHROMA_PERSIST_DIR).resolve())
 DOCS_DIR = os.getenv("DOCS_DIR", str(BASE_DIR / "data" / "documents"))
 
 # Model settings

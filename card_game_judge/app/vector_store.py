@@ -1,6 +1,8 @@
 # 在导入任何库之前设置环境变量和抑制警告
 import warnings
 import os
+import json
+from pathlib import Path
 
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 os.environ["CHROMA_TELEMETRY"] = "False"
@@ -20,7 +22,7 @@ from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_openai import OpenAIEmbeddings
-from typing import List, Optional
+from typing import List, Optional, Dict
 import hashlib
 from datetime import datetime
 
@@ -30,10 +32,14 @@ from app.config import (
 )
 from app.models import DocumentType, DocumentMetadata
 
+# 中文卡牌数据路径
+CN_CARDS_FILE = Path(__file__).parent.parent.parent / "digimon_card_data_chiness" / "digimon_cards_cn.json"
+
 
 class VectorStoreManager:
     def __init__(self):
         self._embeddings = None  # 延迟加载
+        self._cn_cards: Dict[str, dict] = {}  # 中文卡牌数据缓存 {card_no: card_data}
         self.client = chromadb.PersistentClient(
             path=CHROMA_PERSIST_DIR,
             settings=Settings(anonymized_telemetry=False)
@@ -43,6 +49,58 @@ class VectorStoreManager:
             chunk_overlap=CHUNK_OVERLAP,
             separators=["\n\n", "\n", "。", "；", " ", ""]
         )
+        self._load_cn_cards()
+    
+    def _load_cn_cards(self):
+        """加载中文卡牌数据"""
+        if CN_CARDS_FILE.exists():
+            try:
+                with open(CN_CARDS_FILE, 'r', encoding='utf-8') as f:
+                    cards = json.load(f)
+                    for card in cards:
+                        card_no = card.get('card_no', '').upper()
+                        if card_no:
+                            self._cn_cards[card_no] = card
+                print(f"✅ [卡牌数据] 加载中文卡牌数据成功: {len(self._cn_cards)} 张")
+            except Exception as e:
+                print(f"❌ [卡牌数据] 加载中文卡牌失败: {e}")
+        else:
+            print(f"❌ [卡牌数据] 中文卡牌文件不存在: {CN_CARDS_FILE}")
+    
+    def get_cn_card(self, card_no: str) -> Optional[dict]:
+        """获取中文卡牌数据"""
+        return self._cn_cards.get(card_no.upper())
+    
+    def format_cn_card(self, card: dict) -> str:
+        """格式化中文卡牌数据为文本"""
+        parts = []
+        parts.append(f"卡牌编号: {card.get('card_no', '')}")
+        parts.append(f"中文名: {card.get('name_cn', '')}")
+        parts.append(f"日文名: {card.get('name_jp', '')}")
+        parts.append(f"类型: {card.get('type', '')}")
+        parts.append(f"稀有度: {card.get('rarity', '')}")
+        parts.append(f"颜色: {card.get('color', '')}")
+        if card.get('level'):
+            parts.append(f"等级: Lv.{card.get('level')}")
+        if card.get('play_cost'):
+            parts.append(f"登场费用: {card.get('play_cost')}")
+        if card.get('dp') and card.get('dp') != '-':
+            parts.append(f"DP: {card.get('dp')}")
+        if card.get('form'):
+            parts.append(f"形态: {card.get('form')}")
+        if card.get('attribute'):
+            parts.append(f"属性: {card.get('attribute')}")
+        if card.get('species'):
+            parts.append(f"类型: {card.get('species')}")
+        if card.get('evolution_condition'):
+            parts.append(f"进化条件: {card.get('evolution_condition')}")
+        if card.get('effect'):
+            parts.append(f"效果: {card.get('effect')}")
+        if card.get('inherited_effect'):
+            parts.append(f"继承效果: {card.get('inherited_effect')}")
+        if card.get('security_effect'):
+            parts.append(f"安防效果: {card.get('security_effect')}")
+        return "\n".join(parts)
     
     @property
     def embeddings(self):
@@ -114,8 +172,8 @@ class VectorStoreManager:
         query: str, 
         doc_types: Optional[List[DocumentType]] = None,
         top_k: int = 5,
-        translate_query: bool = True,
-        translate_result: bool = True
+        translate_query: bool = False,  # 默认不翻译查询
+        translate_result: bool = True   # 默认翻译结果
     ) -> List[dict]:
         """
         跨集合搜索
@@ -124,7 +182,7 @@ class VectorStoreManager:
             query: 查询文本
             doc_types: 限定搜索的文档类型
             top_k: 返回结果数量
-            translate_query: 是否将中文查询扩展为中日双语（提高日文数据匹配）
+            translate_query: 是否将中文查询扩展为中日双语（已废弃，默认False）
             translate_result: 是否将返回结果中的日文术语翻译为中文
         """
         from app.terminology_translator import terminology_translator
@@ -132,12 +190,8 @@ class VectorStoreManager:
         if doc_types is None:
             doc_types = list(DocumentType)
         
-        # 扩展查询：将中文术语转换为日文，同时保留原始中文
+        # 不再扩展查询，直接使用原始查询
         search_query = query
-        if translate_query:
-            search_query = terminology_translator.expand_query(query)
-            if search_query != query:
-                print(f"[搜索] 查询扩展: {query} → {search_query}")
         
         all_results = []
         for doc_type in doc_types:
@@ -172,25 +226,43 @@ class VectorStoreManager:
     def search_by_card_number(self, card_no: str, translate_result: bool = True) -> List[dict]:
         """
         通过卡牌编号精确搜索
-        使用文本匹配而非向量搜索，确保找到正确的卡牌
+        优先从中文卡牌数据中查找
         """
-        from app.terminology_translator import terminology_translator
-        
         results = []
         card_no_upper = card_no.upper()
         
         print(f"[卡牌搜索] 搜索卡牌: {card_no_upper}")
         
+        # 优先从中文卡牌数据中查找
+        cn_card = self.get_cn_card(card_no_upper)
+        if cn_card:
+            content = self.format_cn_card(cn_card)
+            results.append({
+                "content": content,
+                "content_original": content,
+                "metadata": {
+                    "title": f"{cn_card.get('card_no', '')} {cn_card.get('name_cn', '')}",
+                    "doc_type": "card",
+                    "card_no": cn_card.get('card_no', ''),
+                    "source": "cn_cards"
+                },
+                "score": 0.0,  # 精确匹配
+                "doc_type": "card"
+            })
+            print(f"[卡牌搜索] 从中文数据找到: {card_no_upper} - {cn_card.get('name_cn', '')}")
+            return results
+        
+        # 如果中文数据没有，回退到向量库搜索
+        print(f"[卡牌搜索] 中文数据未找到 {card_no_upper}，尝试向量库...")
+        from app.terminology_translator import terminology_translator
+        
         for doc_type in DocumentType:
             collection_name = self._get_collection_name(doc_type)
             try:
                 collection = self.client.get_collection(collection_name)
-                # 获取所有文档进行文本匹配
                 all_docs = collection.get(include=["documents", "metadatas"])
-                
                 for i, doc in enumerate(all_docs["documents"]):
-                    # 检查卡牌编号是否在文档中（精确匹配格式如 【BT20-079】）
-                    if f"【{card_no_upper}】" in doc or f"【{card_no_upper}_" in doc:
+                    if card_no_upper in doc[:300]:
                         content = doc
                         if translate_result:
                             content = terminology_translator.translate_result_to_chinese(content)
@@ -199,16 +271,17 @@ class VectorStoreManager:
                             "content": content,
                             "content_original": doc,
                             "metadata": all_docs["metadatas"][i],
-                            "score": 0.0,  # 精确匹配，分数最高
+                            "score": 0.0,
                             "doc_type": doc_type.value
                         })
-                        print(f"[卡牌搜索] 找到: {card_no_upper} in {collection_name}")
+                        print(f"[卡牌搜索] 从向量库找到: {card_no_upper}")
+                        break
             except Exception as e:
-                print(f"[卡牌搜索] 错误: {e}")
+                print(f"[卡牌搜索] 向量库搜索错误: {e}")
                 continue
         
         print(f"[卡牌搜索] {card_no_upper} 共找到 {len(results)} 条结果")
-        return results[:3]  # 最多返回3条（可能有异画版）
+        return results[:3]
     
     def delete_document(self, doc_id: str, doc_type: DocumentType) -> bool:
         """删除指定文档"""
