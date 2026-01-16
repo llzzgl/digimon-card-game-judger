@@ -1,4 +1,5 @@
-card_game_judge/data/chroma_db/chroma.sqlite3
+card_game_judge/data/*
+data/*
 *.sqlite3
 digimon_cards_cn.json
 
