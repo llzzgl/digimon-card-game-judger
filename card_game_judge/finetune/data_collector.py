@@ -58,7 +58,8 @@ class DTCGDataCollector:
         "timing": "你是数码宝贝卡牌游戏(DTCG)的规则专家。请解释效果时机的触发条件和处理方式。",
         "qa": "你是数码宝贝卡牌游戏(DTCG)的官方裁定专家。请根据官方Q&A回答问题。",
         "scenario": "你是数码宝贝卡牌游戏(DTCG)的规则专家。请分析游戏场景并给出正确的处理方式。",
-        "general": "你是数码宝贝卡牌游戏(DTCG)的规则专家。请准确回答关于游戏规则的问题。"
+        "general": "你是数码宝贝卡牌游戏(DTCG)的规则专家。请准确回答关于游戏规则的问题。",
+        "card": "你是数码宝贝卡牌游戏(DTCG)的卡牌数据专家。请准确回答关于卡牌信息和效果的问题。"
     }
     
     def __init__(self, output_dir: str = "training_data"):
@@ -68,6 +69,7 @@ class DTCGDataCollector:
         self.rule_qa_pairs: List[QAPair] = []
         self.official_qa_pairs: List[QAPair] = []
         self.custom_qa_pairs: List[QAPair] = []
+        self.card_qa_pairs: List[QAPair] = []  # 新增：卡牌数据问答
         
         # 规则书章节标题映射
         self.chapter_titles = {
@@ -471,11 +473,311 @@ class DTCGDataCollector:
                 count += 1
         return count
     
+    # ==================== 卡牌数据处理 ====================
+    
+    def load_card_data(self, card_data_path: str) -> int:
+        """
+        从卡牌数据文件加载并生成训练数据
+        
+        Args:
+            card_data_path: 卡牌数据 JSON 文件路径
+        
+        Returns:
+            生成的问答数量
+        """
+        card_data_path = Path(card_data_path)
+        if not card_data_path.exists():
+            print(f"❌ 卡牌数据文件不存在: {card_data_path}")
+            return 0
+        
+        print(f"📥 加载卡牌数据: {card_data_path}")
+        with open(card_data_path, 'r', encoding='utf-8') as f:
+            cards = json.load(f)
+        
+        print(f"✅ 加载了 {len(cards)} 张卡牌")
+        
+        count = 0
+        count += self._generate_card_info_qa(cards)
+        count += self._generate_card_effect_qa(cards)
+        count += self._generate_card_search_qa(cards)
+        count += self._generate_card_comparison_qa(cards)
+        
+        print(f"✅ 从卡牌数据生成了 {count} 条问答对")
+        return count
+    
+    def _generate_card_info_qa(self, cards: List[Dict]) -> int:
+        """生成卡牌基本信息问答"""
+        count = 0
+        
+        for card in cards:
+            card_no = card.get("card_no", "")
+            name_cn = card.get("name_cn", "")
+            name_jp = card.get("name_jp", "")
+            
+            if not card_no or not name_cn:
+                continue
+            
+            # 构建卡牌完整信息
+            card_info = self._format_card_info(card)
+            
+            # 问答1: 通过卡号查询卡牌信息
+            qa1 = QAPair(
+                instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                input=f"{card_no} 是什么卡？请提供详细信息。",
+                output=card_info,
+                source="card_data",
+                card_no=card_no,
+                tags=["卡牌信息", card.get("type", "")]
+            )
+            self.card_qa_pairs.append(qa1)
+            count += 1
+            
+            # 问答2: 通过卡名查询卡牌信息
+            qa2 = QAPair(
+                instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                input=f"请介绍一下「{name_cn}」这张卡。",
+                output=card_info,
+                source="card_data",
+                card_no=card_no,
+                tags=["卡牌信息", card.get("type", "")]
+            )
+            self.card_qa_pairs.append(qa2)
+            count += 1
+            
+            # 如果有日文名，也生成日文名查询
+            if name_jp and name_jp != name_cn:
+                qa3 = QAPair(
+                    instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                    input=f"「{name_jp}」是什么卡？",
+                    output=f"「{name_jp}」的中文名是「{name_cn}」。\n\n{card_info}",
+                    source="card_data",
+                    card_no=card_no,
+                    tags=["卡牌信息", "日文名"]
+                )
+                self.card_qa_pairs.append(qa3)
+                count += 1
+        
+        return count
+    
+    def _generate_card_effect_qa(self, cards: List[Dict]) -> int:
+        """生成卡牌效果相关问答"""
+        count = 0
+        
+        for card in cards:
+            card_no = card.get("card_no", "")
+            name_cn = card.get("name_cn", "")
+            effect = card.get("effect", "")
+            inherited_effect = card.get("inherited_effect", "")
+            security_effect = card.get("security_effect", "")
+            
+            if not card_no or not name_cn:
+                continue
+            
+            # 问答1: 卡牌效果查询
+            if effect:
+                qa1 = QAPair(
+                    instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                    input=f"{card_no} {name_cn} 的效果是什么？",
+                    output=f"【{card_no}】{name_cn}\n\n效果：{effect}",
+                    source="card_effect",
+                    card_no=card_no,
+                    tags=["卡牌效果"]
+                )
+                self.card_qa_pairs.append(qa1)
+                count += 1
+            
+            # 问答2: 进化源效果查询
+            if inherited_effect:
+                qa2 = QAPair(
+                    instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                    input=f"{card_no} {name_cn} 的进化源效果是什么？",
+                    output=f"【{card_no}】{name_cn}\n\n进化源效果：{inherited_effect}",
+                    source="card_effect",
+                    card_no=card_no,
+                    tags=["进化源效果"]
+                )
+                self.card_qa_pairs.append(qa2)
+                count += 1
+            
+            # 问答3: 安防效果查询
+            if security_effect:
+                qa3 = QAPair(
+                    instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                    input=f"{card_no} {name_cn} 的安防效果是什么？",
+                    output=f"【{card_no}】{name_cn}\n\n安防效果：{security_effect}",
+                    source="card_effect",
+                    card_no=card_no,
+                    tags=["安防效果"]
+                )
+                self.card_qa_pairs.append(qa3)
+                count += 1
+        
+        return count
+    
+    def _generate_card_search_qa(self, cards: List[Dict]) -> int:
+        """生成卡牌搜索相关问答"""
+        count = 0
+        
+        # 按颜色分组
+        color_groups = {}
+        for card in cards:
+            color = card.get("color", "")
+            if color:
+                if color not in color_groups:
+                    color_groups[color] = []
+                color_groups[color].append(card)
+        
+        # 按特征分组
+        species_groups = {}
+        for card in cards:
+            species = card.get("species", "")
+            if species and card.get("type") == "数码兽卡":
+                for sp in species.split("/"):
+                    sp = sp.strip()
+                    if sp:
+                        if sp not in species_groups:
+                            species_groups[sp] = []
+                        species_groups[sp].append(card)
+        
+        # 生成颜色搜索问答（采样）
+        for color, color_cards in color_groups.items():
+            if len(color_cards) > 5:
+                # 随机采样5张卡
+                import random
+                sampled = random.sample(color_cards, 5)
+                card_list = "\n".join([f"• {c.get('card_no')} {c.get('name_cn')}" for c in sampled])
+                
+                qa = QAPair(
+                    instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                    input=f"请列举一些{color}色的卡牌。",
+                    output=f"以下是一些{color}色的卡牌：\n\n{card_list}\n\n（仅列举部分示例）",
+                    source="card_search",
+                    tags=["卡牌搜索", f"{color}色"]
+                )
+                self.card_qa_pairs.append(qa)
+                count += 1
+        
+        # 生成特征搜索问答（采样）
+        for species, species_cards in species_groups.items():
+            if len(species_cards) >= 3:
+                import random
+                sampled = random.sample(species_cards, min(3, len(species_cards)))
+                card_list = "\n".join([f"• {c.get('card_no')} {c.get('name_cn')}" for c in sampled])
+                
+                qa = QAPair(
+                    instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                    input=f"有哪些特征包含「{species}」的数码兽？",
+                    output=f"以下是一些特征包含「{species}」的数码兽：\n\n{card_list}\n\n（仅列举部分示例）",
+                    source="card_search",
+                    tags=["卡牌搜索", "特征"]
+                )
+                self.card_qa_pairs.append(qa)
+                count += 1
+        
+        return count
+    
+    def _generate_card_comparison_qa(self, cards: List[Dict]) -> int:
+        """生成卡牌对比问答"""
+        count = 0
+        
+        # 找出同名不同编号的卡牌
+        name_groups = {}
+        for card in cards:
+            name = card.get("name_cn", "")
+            if name:
+                if name not in name_groups:
+                    name_groups[name] = []
+                name_groups[name].append(card)
+        
+        # 生成对比问答
+        for name, same_name_cards in name_groups.items():
+            if len(same_name_cards) >= 2:
+                # 只对比前两张
+                card1, card2 = same_name_cards[0], same_name_cards[1]
+                
+                comparison = f"「{name}」有多个版本：\n\n"
+                comparison += f"【{card1.get('card_no')}】\n"
+                comparison += f"• 颜色：{card1.get('color', '')}\n"
+                comparison += f"• 等级：{card1.get('level', '')}\n"
+                if card1.get('play_cost'):
+                    comparison += f"• 登场费用：{card1.get('play_cost')}\n"
+                if card1.get('dp'):
+                    comparison += f"• DP：{card1.get('dp')}\n"
+                comparison += f"• 效果：{card1.get('effect', '')[:50]}...\n\n"
+                
+                comparison += f"【{card2.get('card_no')}】\n"
+                comparison += f"• 颜色：{card2.get('color', '')}\n"
+                comparison += f"• 等级：{card2.get('level', '')}\n"
+                if card2.get('play_cost'):
+                    comparison += f"• 登场费用：{card2.get('play_cost')}\n"
+                if card2.get('dp'):
+                    comparison += f"• DP：{card2.get('dp')}\n"
+                comparison += f"• 效果：{card2.get('effect', '')[:50]}...\n"
+                
+                qa = QAPair(
+                    instruction=self.SYSTEM_INSTRUCTIONS["card"],
+                    input=f"「{name}」有哪些不同版本？",
+                    output=comparison,
+                    source="card_comparison",
+                    tags=["卡牌对比"]
+                )
+                self.card_qa_pairs.append(qa)
+                count += 1
+                
+                # 只生成前10个对比
+                if count >= 10:
+                    break
+        
+        return count
+    
+    def _format_card_info(self, card: Dict) -> str:
+        """格式化卡牌完整信息"""
+        info = f"【{card.get('card_no', '')}】{card.get('name_cn', '')}"
+        
+        if card.get('name_jp'):
+            info += f"（{card.get('name_jp')}）"
+        
+        info += f"\n\n• 类型：{card.get('type', '')}"
+        info += f"\n• 稀有度：{card.get('rarity', '')}"
+        info += f"\n• 颜色：{card.get('color', '')}"
+        
+        if card.get('level'):
+            info += f"\n• 等级：Lv.{card.get('level')}"
+        
+        if card.get('form'):
+            info += f"\n• 形态：{card.get('form')}"
+        
+        if card.get('attribute'):
+            info += f"\n• 属性：{card.get('attribute')}"
+        
+        if card.get('species'):
+            info += f"\n• 特征：{card.get('species')}"
+        
+        if card.get('play_cost'):
+            info += f"\n• 登场费用：{card.get('play_cost')}"
+        
+        if card.get('dp') and card.get('dp') != '-':
+            info += f"\n• DP：{card.get('dp')}"
+        
+        if card.get('evolution_condition'):
+            info += f"\n• 进化条件：{card.get('evolution_condition')}"
+        
+        if card.get('effect'):
+            info += f"\n\n【效果】\n{card.get('effect')}"
+        
+        if card.get('inherited_effect'):
+            info += f"\n\n【进化源效果】\n{card.get('inherited_effect')}"
+        
+        if card.get('security_effect'):
+            info += f"\n\n【安防效果】\n{card.get('security_effect')}"
+        
+        return info
+    
     # ==================== 数据导出 ====================
     
     def get_all_qa_pairs(self) -> List[QAPair]:
         """获取所有问答对"""
-        return self.rule_qa_pairs + self.official_qa_pairs + self.custom_qa_pairs
+        return self.rule_qa_pairs + self.official_qa_pairs + self.custom_qa_pairs + self.card_qa_pairs
     
     def export_jsonl(self, filename: str = None, 
                      include_metadata: bool = False) -> str:
@@ -565,6 +867,7 @@ class DTCGDataCollector:
             "rule_qa_count": len(self.rule_qa_pairs),
             "official_qa_count": len(self.official_qa_pairs),
             "custom_qa_count": len(self.custom_qa_pairs),
+            "card_qa_count": len(self.card_qa_pairs),
             "total_count": len(all_qa),
             "source_distribution": source_counts,
             "tag_distribution": tag_counts
@@ -579,6 +882,7 @@ class DTCGDataCollector:
         print("=" * 50)
         print(f"规则书问答: {stats['rule_qa_count']}")
         print(f"官方 Q&A: {stats['official_qa_count']}")
+        print(f"卡牌数据问答: {stats['card_qa_count']}")
         print(f"自定义问答: {stats['custom_qa_count']}")
         print(f"总计: {stats['total_count']}")
         
@@ -629,6 +933,9 @@ def main():
                         help="规则书路径")
     parser.add_argument("--qa-file", type=str, default=None,
                         help="官方 Q&A 文件路径")
+    parser.add_argument("--card-data", type=str, 
+                        default="../../digimon_card_data_chiness/digimon_cards_cn.json",
+                        help="卡牌数据文件路径")
     parser.add_argument("--output-dir", type=str, default="training_data",
                         help="输出目录")
     parser.add_argument("--format", type=str, default="all",
@@ -636,6 +943,8 @@ def main():
                         help="输出格式")
     parser.add_argument("--create-template", action="store_true",
                         help="创建 Q&A 模板文件")
+    parser.add_argument("--no-cards", action="store_true",
+                        help="不加载卡牌数据")
     
     args = parser.parse_args()
     
@@ -663,10 +972,19 @@ def main():
         if default_qa.exists():
             collector.load_official_qa_from_file(str(default_qa))
     
-    # 3. 显示统计
+    # 3. 加载卡牌数据
+    if not args.no_cards:
+        card_data_path = Path(__file__).parent / args.card_data
+        if card_data_path.exists():
+            collector.load_card_data(str(card_data_path))
+        else:
+            print(f"⚠️ 卡牌数据不存在: {card_data_path}")
+            print(f"   提示：使用 --card-data 指定卡牌数据路径，或使用 --no-cards 跳过")
+    
+    # 4. 显示统计
     collector.print_statistics()
     
-    # 4. 导出数据
+    # 5. 导出数据
     stats = collector.get_statistics()
     if stats['total_count'] > 0:
         if args.format in ["jsonl", "all"]:
