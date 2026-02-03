@@ -1,0 +1,30 @@
+# 生成的数据文件
+*.json
+!requirements.json
+
+# 调试文件
+*.html
+*.txt
+
+# Python缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 日志
+*.log
+
+# ChromeDriver
+chromedriver*
