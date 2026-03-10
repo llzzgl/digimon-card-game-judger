@@ -18,29 +18,42 @@ if os.getenv("USE_PROXY", "").lower() == "true":
     os.environ["HTTPS_PROXY"] = f"http://{os.getenv('PROXY_HOST', '127.0.0.1')}:{os.getenv('PROXY_PORT', '7897')}"
 
 
-SYSTEM_PROMPT = """你是数码宝贝卡牌游戏（DTCG）裁判助手。
+SYSTEM_PROMPT = """你是数码宝贝卡牌游戏（Digimon Card Game）的专业裁判助手。
 
-【重要提醒】
-- 卡牌效果已在界面上单独显示，你不需要列出卡牌效果
-- 你的分析仅供参考，复杂情况请以官方裁定为准
-- 如果规则参考中没有直接相关的规则，请明确说明"规则参考中未找到直接相关条款"
+【重要】你只回答数码宝贝卡牌游戏相关的问题，不是网络安全、不是其他游戏！
+
+【关键提醒】
+参考资料中如果包含规则编号（如"11-1-3"），这些就是数码宝贝卡牌游戏的官方规则，必须使用！
+
+【重要原则】
+1. 仔细阅读【参考资料】中的每一条内容
+2. 如果看到规则编号（如"11-1-3"、"8.1"等），这就是数码宝贝卡牌游戏的官方规则
+3. 必须基于这些规则给出明确的裁定
+4. 引用具体的规则条款编号
 
 【你的任务】
-根据下方【规则参考】分析玩家的问题，重点关注：
-1. 效果的触发时机（什么时候触发）
-2. 效果的处理顺序（先处理什么，后处理什么）
-3. 给出裁定建议
+1. 逐条检查【参考资料】
+2. 找出包含规则编号的内容
+3. 基于这些数码宝贝卡牌游戏规则回答问题
+4. 引用规则编号
 
-【规则参考】
+【参考资料】
 {context}
 
-如果规则参考不足以回答问题，请诚实说明。
+【回答格式】
+根据数码宝贝卡牌游戏规则[编号]，[回答内容]...
+
+【特别注意】
+- 这是数码宝贝卡牌游戏（Digimon Card Game），不是网络安全或其他领域
+- 规则编号通常是数字加点号，如"11-1-3"、"8.1"
+- 只要参考资料中有规则编号，就一定要使用
+- 不要说"未找到"，除非真的完全没有相关内容
 """
 
-USER_PROMPT = """【问题】
+USER_PROMPT = """【数码宝贝卡牌游戏问题】
 {question}
 
-请根据规则参考分析。如果规则参考不足，请说明。"""
+请根据上方【参考资料】中的数码宝贝卡牌游戏规则回答。"""
 
 
 class LLMService:
@@ -66,7 +79,7 @@ class LLMService:
         elif LLM_MODEL == "qwen":
             # 通义千问 - 使用 OpenAI 兼容接口
             return ChatOpenAI(
-                model="qwen-flash",  # 可选: qwen-turbo, qwen-plus, qwen-max
+                model="qwen3.5-plus",  # 可选: qwen-turbo, qwen-plus, qwen-max
                 temperature=0,
                 openai_api_key=DASHSCOPE_API_KEY,
                 openai_api_base="https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -83,16 +96,46 @@ class LLMService:
                 max_retries=2
             )
     
-    def _call_llm(self, context: str, question: str) -> str:
-        """实际调用 LLM 的方法"""
-        chain = self.prompt | self.llm
+    def _call_llm(self, context: str, question: str, system_prompt: str = None) -> str:
+        """实际调用 LLM 的方法
+        
+        Args:
+            context: 上下文信息
+            question: 用户问题
+            system_prompt: 自定义系统提示词（可选）
+        """
+        # 如果提供了自定义系统提示词，将其放在最前面作为身份定义
+        # 然后是默认的任务说明
+        if system_prompt:
+            # 配置的系统提示词定义身份和原则
+            # 默认的SYSTEM_PROMPT定义具体任务
+            combined_prompt = f"""{system_prompt}
+
+---
+
+{SYSTEM_PROMPT}"""
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", combined_prompt),
+                ("human", USER_PROMPT)
+            ])
+        else:
+            prompt = self.prompt
+        
+        chain = prompt | self.llm
         response = chain.invoke({"context": context, "question": question})
         if hasattr(response, 'content'):
             return response.content
         return str(response)
     
-    def generate_answer(self, question: str, context_docs: List[dict], log_callback=None) -> str:
-        """根据检索到的文档生成回答，带日志"""
+    def generate_answer(self, question: str, context_docs: List[dict], system_prompt: str = None, log_callback=None) -> str:
+        """根据检索到的文档生成回答，带日志
+        
+        Args:
+            question: 用户问题
+            context_docs: 上下文文档列表
+            system_prompt: 自定义系统提示词（可选，如果不提供则使用默认的）
+            log_callback: 日志回调函数
+        """
         def log(msg: str):
             if log_callback:
                 log_callback(msg)
@@ -103,28 +146,42 @@ class LLMService:
         # 步骤1: 构建上下文
         log("📝 步骤1/3: 构建上下文...")
         context_parts = []
+        card_count = 0
+        rule_count = 0
+        
         for i, doc in enumerate(context_docs, 1):
             title = doc['metadata'].get('title', '未知来源')
             doc_type = doc.get('doc_type', '')
-            type_label = {"rule": "规则", "ruling": "官方裁定", "case": "判例"}.get(doc_type, "文档")
             
-            # 提取卡牌编号（如果有）
-            content = doc['content']
-            card_no = ""
-            if "card_no:" in content.lower():
-                import re
-                match = re.search(r'card_no:\s*([A-Z0-9-_]+)', content, re.IGNORECASE)
-                if match:
-                    card_no = f" [{match.group(1)}]"
-            
-            context_parts.append(
-                f"【参考{i}】{card_no}\n"
-                f"来源：{title}（{type_label}）\n"
-                f"内容：{content}\n"
-            )
+            # 区分卡牌数据和规则数据
+            if doc_type == 'card':
+                card_count += 1
+                type_label = "卡牌效果"
+                # 提取卡牌编号
+                content = doc['content']
+                card_no = ""
+                if "card_no:" in content.lower():
+                    import re
+                    match = re.search(r'card_no:\s*([A-Z0-9-_]+)', content, re.IGNORECASE)
+                    if match:
+                        card_no = f" [{match.group(1)}]"
+                
+                context_parts.append(
+                    f"【卡牌{card_count}】{card_no}\n"
+                    f"名称：{title}\n"
+                    f"效果：{content}\n"
+                )
+            else:
+                rule_count += 1
+                type_label = {"rule": "规则", "ruling": "官方裁定", "case": "判例"}.get(doc_type, "文档")
+                context_parts.append(
+                    f"【参考{rule_count}】\n"
+                    f"来源：{title}（{type_label}）\n"
+                    f"内容：{doc['content']}\n"
+                )
         
         context = "\n\n".join(context_parts)
-        log(f"✅ 上下文构建完成，共 {len(context_docs)} 个参考文档，{len(context)} 字符")
+        log(f"✅ 上下文构建完成：{card_count} 张卡牌 + {rule_count} 条规则，共 {len(context)} 字符")
         
         # 调试：打印实际传给 LLM 的上下文
         print("=" * 60)
@@ -137,9 +194,11 @@ class LLMService:
         
         # 步骤2: 调用 LLM
         log(f"🤖 步骤2/3: 调用 LLM ({LLM_MODEL})...")
+        if system_prompt:
+            log(f"   使用自定义系统提示词（{len(system_prompt)} 字符）")
         
         try:
-            result = self._call_llm(context, question)
+            result = self._call_llm(context, question, system_prompt)
             elapsed = time.time() - start_time
             log(f"✅ LLM 响应完成，耗时 {elapsed:.1f}s")
             

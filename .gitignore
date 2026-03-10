@@ -2,7 +2,9 @@ card_game_judge/data/
 *.sqlite3
 data/
 digimon_cards_cn.json
-
+digimon_card_data/digimon_card_data_chiness/*.json
+digimon_card_data/*.json
+digimon_card_data/term_mapping/*.json
 # 环境变量文件（包含 API Key）
 .env
 *.env
