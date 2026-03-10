@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 训练输出
+output/
+runs/
+*.log
+
+# 训练数据（可选：如果数据太大可以忽略）
+# training_data/*.jsonl
+# training_data/*.json
+
+# 源数据（建议保留在版本控制中，但如果文件太大可以忽略）
+# origin_data/cards.json
+# origin_data/rulebook.txt
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 模型文件（通常很大，不建议提交）
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+
+# TensorBoard
+events.out.tfevents.*

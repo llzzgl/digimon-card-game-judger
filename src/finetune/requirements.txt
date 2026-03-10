@@ -1,0 +1,21 @@
+# DTCG 微调训练依赖
+# 安装命令: pip install -r requirements.txt
+
+# 核心依赖
+torch>=2.0.0
+transformers>=4.36.0
+datasets>=2.14.0
+accelerate>=0.25.0
+peft>=0.7.0  # LoRA 支持
+
+# 训练优化
+bitsandbytes>=0.41.0  # 量化支持 (Windows 可能需要特殊安装)
+scipy>=1.11.0
+
+# 数据处理
+pandas>=2.0.0
+tqdm>=4.65.0
+
+# 可选: 监控和日志
+tensorboard>=2.14.0
+wandb>=0.15.0
