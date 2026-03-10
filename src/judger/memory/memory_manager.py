@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 记忆管理器 - 负责记忆的存储、检索和管理
 参考 openclaw 的记忆持久化设计
@@ -15,7 +15,7 @@ from .memory_config import (
     MemoryConfig, MemoryEntry, MemoryType, 
     MemoryImportance, default_memory_config
 )
-from .query_processor import query_processor
+# from .query_processor import query_processor  # 循环依赖，已移除
 
 
 class MemoryManager:
@@ -47,7 +47,7 @@ class MemoryManager:
         # 加载长期记忆索引
         self._load_memory_index()
         
-        print(f"✅ 记忆系统初始化完成")
+        print(f"[OK] 记忆系统初始化完成")
         print(f"   存储路径: {self.storage_path}")
         print(f"   长期记忆数: {self.memory_collection.count()}")
     
@@ -164,7 +164,7 @@ class MemoryManager:
             # 移除最旧的记忆
             self.short_term_memories.pop(0)
         
-        print(f"📝 添加短期记忆: {memory.id}")
+        print(f"[MEM] 添加短期记忆: {memory.id}")
     
     def _add_to_long_term(self, memory: MemoryEntry):
         """添加到长期记忆（持久化）"""
@@ -307,7 +307,7 @@ class MemoryManager:
                 except Exception as e:
                     print(f"   删除记忆 {memory_id} 失败: {e}")
             
-            print(f"✅ 记忆整理完成：删除 {deleted_count} 条低优先级记忆")
+            print(f"[OK] 记忆整理完成：删除 {deleted_count} 条低优先级记忆")
             print(f"   当前记忆数: {self.memory_collection.count()}")
             
         except Exception as e:
@@ -487,3 +487,4 @@ class MemoryManager:
 
 # 全局实例
 memory_manager = MemoryManager()
+

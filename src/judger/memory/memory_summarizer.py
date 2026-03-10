@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 记忆总结器 - 使用LLM总结问答对
 """
 from typing import Optional, List
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 
 from .memory_config import MemoryConfig, default_memory_config
-from .llm_service import llm_service
+from ..llm.service import llm_service
 
 
 class MemorySummarizer:
@@ -239,3 +239,5 @@ class MemorySummarizer:
 
 # 全局实例
 memory_summarizer = MemorySummarizer()
+
+
