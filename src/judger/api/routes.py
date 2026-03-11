@@ -1,14 +1,17 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from typing import Optional, List
 import json
 import os
+import re
+from datetime import datetime
 
 from app.models import (
     DocumentType, DocumentMetadata, DocumentUpload,
-    QueryRequest, QueryResponse, DocumentInfo
+    QueryRequest, QueryResponse, DocumentInfo,
+    QueryMode, CorrectionRequest
 )
 from app.vector_store import vector_store
 from app.pdf_processor import extract_text_from_bytes
@@ -17,10 +20,18 @@ from app.memory_manager import memory_manager
 from app.memory_summarizer import memory_summarizer
 from app.memory_config import MemoryType, MemoryImportance
 
+# 导入模式处理模块
+from judger.api.modes import (
+    QueryMode as ModeEnum,
+    detect_mode_from_query,
+    parse_correction_query,
+    CorrectionRecord
+)
+
 app = FastAPI(
     title="卡牌游戏智能裁判",
-    description="基于规则手册、官方裁定和判例的问答系统",
-    version="1.0.0"
+    description="基于规则手册、官方裁定和判例的问答系统（支持提问/纠错双模式）",
+    version="1.1.0"
 )
 
 app.add_middleware(
@@ -55,12 +66,12 @@ async def upload_document(
     上传文档到知识库，支持 PDF、TXT、JSON 格式
     
     - doc_type: rule(规则), ruling(官方裁定), case(判例)
-    - tags: 用逗号分隔的标签，如 "战斗,召唤,效果"
+    - tags: 用逗号分隔的标签，如 "战斗，召唤，效果"
     
     JSON 格式支持：
-    - 术语对照表格式: {"category": {"日文": "中文", ...}}
-    - 简单键值对: {"原文": "翻译", ...}
-    - 数组格式: [{"field": "value"}, ...]
+    - 术语对照表格式：{"category": {"日文": "中文", ...}}
+    - 简单键值对：{"原文": "翻译", ...}
+    - 数组格式：[{"field": "value"}, ...]
     """
     content = await file.read()
     text = extract_text_from_bytes(content, file.filename)
@@ -91,11 +102,11 @@ async def add_text_document(doc: DocumentUpload):
     {
         "metadata": {
             "doc_type": "ruling",
-            "title": "关于XXX卡牌效果的裁定",
+            "title": "关于 XXX 卡牌效果的裁定",
             "effective_date": "2024-01-15",
             "tags": ["效果", "连锁"]
         },
-        "content": "问：当XXX效果发动时...答：根据规则..."
+        "content": "问：当 XXX 效果发动时...答：根据规则..."
     }
     ```
     """
@@ -106,15 +117,84 @@ async def add_text_document(doc: DocumentUpload):
     return {"status": "success", "data": result}
 
 
-@app.post("/query", response_model=QueryResponse, summary="提问")
-async def query(request: QueryRequest):
+# ==================== 模式分离 API ====================
+
+@app.post("/judge", response_model=QueryResponse, summary="统一查询接口（自动检测模式）")
+async def judge_auto(request: QueryRequest):
     """
-    向智能裁判提问
+    统一查询接口 - 自动检测模式
     
-    - question: 你的问题
+    - question: 你的问题（可带前缀如 [纠错] xxx）
+    - mode: AUTO（自动检测）/ QUESTION / CORRECTION
     - doc_types: 可选，限定搜索范围 ["rule", "ruling", "case"]
     - top_k: 检索的参考文档数量
+    
+    模式检测优先级：
+    1. API 参数 mode（如果明确指定）
+    2. 消息前缀检测（[纠错]/[提问] 等）
+    3. 默认提问模式
     """
+    from app.query_processor import query_processor
+    
+    # 1. 确定模式
+    mode = request.mode
+    question = request.question
+    
+    if mode == QueryMode.AUTO:
+        # 自动检测：检查前缀
+        detected_mode, cleaned_question = detect_mode_from_query(question)
+        mode = detected_mode
+        question = cleaned_question
+    
+    # 2. 根据模式分发处理
+    if mode == QueryMode.CORRECTION:
+        return await _handle_correction_api(question, request.context)
+    else:
+        # 提问模式 - 使用原有逻辑
+        return await _handle_question_api(question, request.doc_types, request.top_k)
+
+
+@app.post("/judge/question", response_model=QueryResponse, summary="提问接口")
+async def judge_question(request: QueryRequest):
+    """
+    提问模式接口 - 正常卡牌/规则查询
+    
+    - question: 你的问题
+    - doc_types: 可选，限定搜索范围
+    - top_k: 检索的参考文档数量
+    - context: 可选，上下文信息
+    """
+    # 强制使用提问模式（清理可能的前缀）
+    _, cleaned_question = detect_mode_from_query(request.question)
+    
+    return await _handle_question_api(cleaned_question, request.doc_types, request.top_k, request.context)
+
+
+@app.post("/judge/correction", response_model=QueryResponse, summary="纠错接口")
+async def judge_correction(request: CorrectionRequest):
+    """
+    纠错模式接口 - 对已有裁定/答案进行纠正
+    
+    - query: 纠错内容
+    - original_answer_id: 可选，被纠正的答案 ID
+    - reference: 可选，引用依据（规则章节等）
+    - corrector_id: 可选，纠正者 ID
+    
+    返回包含纠错记录和建议
+    """
+    return await _handle_correction_api(
+        request.query,
+        {
+            "original_answer_id": request.original_answer_id,
+            "reference": request.reference,
+            "corrector_id": request.corrector_id
+        }
+    )
+
+
+async def _handle_question_api(question: str, doc_types: Optional[List[DocumentType]] = None, 
+                                top_k: int = 5, context: Optional[dict] = None) -> QueryResponse:
+    """处理提问模式请求"""
     from app.query_processor import query_processor
     
     # 1. 首先搜索记忆
@@ -122,20 +202,20 @@ async def query(request: QueryRequest):
     if memory_manager.config.enable_memory_search:
         print("[记忆] 🧠 搜索相关记忆...")
         memory_results = memory_manager.search_memories(
-            query=request.question,
+            query=question,
             top_k=3
         )
         if memory_results:
             print(f"[记忆] ✅ 找到 {len(memory_results)} 条相关记忆")
     
     card_docs = []  # 卡牌数据（直接显示）
-    rule_docs_list = []  # 规则数据（给LLM分析）
+    rule_docs_list = []  # 规则数据（给 LLM 分析）
     seen_contents = set()
     
     # 1. 优先提取卡牌编号并精确检索
-    card_numbers = query_processor.extract_card_numbers(request.question)
+    card_numbers = query_processor.extract_card_numbers(question)
     if card_numbers:
-        print(f"[检索] 🎴 发现卡牌编号: {card_numbers}")
+        print(f"[检索] 🎴 发现卡牌编号：{card_numbers}")
         for card_no in card_numbers:
             # 精确搜索卡牌数据
             results = vector_store.search_by_card_number(card_no, translate_result=True)
@@ -161,11 +241,11 @@ async def query(request: QueryRequest):
                     rule_docs_list.append(doc)
     
     # 2. 对原始问题进行语义检索（规则相关）
-    print(f"[检索] 🔍 语义搜索: {request.question[:50]}...")
+    print(f"[检索] 🔍 语义搜索：{question[:50]}...")
     rule_results = vector_store.search(
-        query=request.question,
-        doc_types=request.doc_types,
-        top_k=request.top_k,
+        query=question,
+        doc_types=doc_types,
+        top_k=top_k,
         translate_result=True
     )
     print(f"[检索] 📚 找到 {len(rule_results)} 条规则文档")
@@ -175,7 +255,7 @@ async def query(request: QueryRequest):
             seen_contents.add(content_hash)
             rule_docs_list.append(doc)
     
-    # 3. 构建给LLM的上下文（包含记忆、卡牌效果和规则）
+    # 3. 构建给 LLM 的上下文（包含记忆、卡牌效果和规则）
     all_docs_for_llm = []
     
     # 优先添加记忆（已验证的知识）
@@ -205,16 +285,17 @@ async def query(request: QueryRequest):
         return QueryResponse(
             answer="抱歉，我在知识库中没有找到与您问题相关的信息。",
             sources=[],
-            cards=[]
+            cards=[],
+            mode="question"
         )
     
     # LLM 只做规则分析（不传卡牌数据，避免它编造效果）
     if all_docs_for_llm:
-        answer = llm_service.generate_answer(request.question, all_docs_for_llm)
+        answer = llm_service.generate_answer(question, all_docs_for_llm)
     else:
         answer = "已找到相关卡牌数据（见上方）。如需规则裁定分析，请确保已导入规则文档。"
     
-    # 卡牌数据直接返回（前端直接显示，不依赖LLM）
+    # 卡牌数据直接返回（前端直接显示，不依赖 LLM）
     cards = [
         {
             "card_no": doc["metadata"].get("card_no", doc["metadata"].get("title", "")),
@@ -234,15 +315,118 @@ async def query(request: QueryRequest):
         for doc in rule_docs_list
     ]
     
-    # 返回结果，包含记忆信息
-    response = QueryResponse(answer=answer, sources=sources, cards=cards)
+    # 返回结果
+    return QueryResponse(
+        answer=answer,
+        sources=sources,
+        cards=cards,
+        mode="question"
+    )
+
+
+async def _handle_correction_api(query: str, context: Optional[dict] = None) -> QueryResponse:
+    """处理纠错模式请求"""
+    # 解析纠错查询
+    parsed = parse_correction_query(query)
     
-    # 添加记忆相关信息（用于前端显示反馈选项）
-    if hasattr(response, '__dict__'):
-        response.__dict__['memories_used'] = len(memory_results)
-        response.__dict__['can_save_memory'] = True  # 标记可以保存为记忆
+    # 构建纠错记录
+    correction_record = CorrectionRecord(
+        original_query=query,
+        correction=parsed.get("correction_content", query),
+        corrected_by=context.get("corrector_id") if context else None,
+        timestamp=datetime.now(),
+        status="pending_review",
+        reference=context.get("reference") if context else None,
+        original_answer_id=context.get("original_answer_id") if context else None
+    )
     
-    return response
+    # 与参考数据对比验证
+    reference_match = {}
+    
+    if parsed.get("target_card"):
+        # 搜索卡牌数据
+        results = vector_store.search_by_card_number(parsed["target_card"], translate_result=True)
+        if results:
+            reference_match["card_found"] = True
+            reference_match["card_info"] = {
+                "card_no": results[0]["metadata"].get("card_no"),
+                "title": results[0]["metadata"].get("title"),
+                "effect_excerpt": results[0]["content"][:200]
+            }
+    
+    if parsed.get("target_rule"):
+        # 搜索规则
+        rule_results = vector_store.search(
+            query=parsed["target_rule"],
+            doc_types=[DocumentType.RULE],
+            top_k=1,
+            translate_result=True
+        )
+        if rule_results:
+            reference_match["rule_found"] = True
+            reference_match["rule_content"] = rule_results[0]["content"][:300]
+    
+    # 生成纠正报告/建议
+    suggestion = _generate_correction_suggestion(parsed, reference_match)
+    
+    # 构建回答
+    answer = f"## 纠错报告\n\n"
+    answer += f"**纠正内容**: {parsed.get('correction_content', query)}\n\n"
+    
+    if parsed.get("target_card"):
+        answer += f"**涉及卡牌**: {parsed['target_card']}\n"
+    if parsed.get("target_rule"):
+        answer += f"**涉及规则**: {parsed['target_rule']}\n"
+    
+    answer += f"\n**状态**: 待审核\n\n"
+    answer += f"**建议**: {suggestion}\n"
+    
+    return QueryResponse(
+        answer=answer,
+        sources=[],
+        cards=[],
+        mode="correction",
+        correction_record={
+            "original_query": query,
+            "correction": parsed.get("correction_content", query),
+            "target_card": parsed.get("target_card"),
+            "target_rule": parsed.get("target_rule"),
+            "timestamp": correction_record.timestamp.isoformat(),
+            "status": correction_record.status
+        }
+    )
+
+
+def _generate_correction_suggestion(parsed: dict, reference_match: dict) -> str:
+    """生成纠正建议"""
+    suggestions = []
+    
+    if reference_match:
+        suggestions.append("已找到相关参考数据，建议核对后更新裁定")
+    else:
+        suggestions.append("未找到直接参考数据，建议人工审核")
+    
+    if parsed.get("target_card"):
+        suggestions.append(f"涉及卡牌：{parsed['target_card']}")
+    
+    if parsed.get("target_rule"):
+        suggestions.append(f"涉及规则：{parsed['target_rule']}")
+    
+    return "；".join(suggestions)
+
+
+# ==================== 原有 API（保持兼容） ====================
+
+@app.post("/query", response_model=QueryResponse, summary="提问（旧接口，兼容用）")
+async def query(request: QueryRequest):
+    """
+    向智能裁判提问（旧接口，建议使用 /judge/question）
+    
+    - question: 你的问题
+    - doc_types: 可选，限定搜索范围 ["rule", "ruling", "case"]
+    - top_k: 检索的参考文档数量
+    """
+    return await _handle_question_api(request.question, request.doc_types, request.top_k)
 
 
 @app.get("/documents", summary="列出所有文档")
@@ -257,7 +441,7 @@ async def delete_document(doc_id: str, doc_type: DocumentType):
     """
     删除指定文档
     
-    - doc_id: 文档ID（上传时返回）
+    - doc_id: 文档 ID（上传时返回）
     - doc_type: 文档类型
     """
     success = vector_store.delete_document(doc_id, doc_type)
@@ -302,7 +486,7 @@ async def save_memory(
     - question: 问题
     - answer: 答案
     - user_confirmed: 用户是否确认正确
-    - importance: 重要性 (1=低, 2=中, 3=高, 4=关键)
+    - importance: 重要性 (1=低，2=中，3=高，4=关键)
     - tags: 标签，逗号分隔
     """
     try:
@@ -330,7 +514,7 @@ async def save_memory(
             }
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"保存记忆失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"保存记忆失败：{str(e)}")
 
 
 @app.get("/memory/search", summary="搜索记忆")
@@ -390,4 +574,3 @@ async def get_memory_stats():
     """获取记忆系统统计信息"""
     stats = memory_manager.get_statistics()
     return {"status": "success", "data": stats}
-

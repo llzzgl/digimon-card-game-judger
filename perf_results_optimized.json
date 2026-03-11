@@ -1,0 +1,23 @@
+{
+  "init_time_ms": 2843.361899998854,
+  "peak_memory_mb": 42.47685718536377,
+  "query_results": {
+    "search_card": {
+      "avg_ms": 0.006409998604794964,
+      "result_count": 1
+    },
+    "search_card_by_name": {
+      "avg_ms": 0.0012500004231696948,
+      "result_count": 0
+    },
+    "search_rulings": {
+      "avg_ms": 0.003064999691559933,
+      "result_count": 37
+    },
+    "translate_term": {
+      "avg_ms": 0.2379949997703079,
+      "result_count": 0
+    }
+  },
+  "rating": "优秀 (A+)"
+}
