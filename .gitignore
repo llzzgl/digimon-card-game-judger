@@ -1,3 +1,4 @@
+# 数据文件
 card_game_judge/data/
 *.sqlite3
 data/
@@ -5,7 +6,29 @@ digimon_cards_cn.json
 digimon_card_data/digimon_card_data_chiness/*.json
 digimon_card_data/*.json
 digimon_card_data/term_mapping/*.json
+
 # 环境变量文件（包含 API Key）
 .env
 *.env
 !.env.example
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 备份文件
+*.bak
+
+# 测试脚本（临时）
+test_*.py
+check_*.py
+verify_*.py
+comprehensive_test.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

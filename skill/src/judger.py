@@ -7,6 +7,7 @@ DTCG Judger - 数码宝贝卡牌裁判核心模块
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -75,6 +76,9 @@ class DTCGJudger:
             卡牌信息字典，未找到返回 None
         """
         card_no = card_no.strip().upper()
+        # 标准化编号：EX08 → EX8, BT01 → BT1
+        card_no = re.sub(r'^(EX)0(\d-)', r'\1\2', card_no)
+        card_no = re.sub(r'^(BT)0(\d-)', r'\1\2', card_no)
         for card in self.cards:
             if card.get('card_no', '').upper() == card_no:
                 return card
@@ -120,6 +124,19 @@ class DTCGJudger:
         results = []
         keyword = keyword.lower()
         
+        # 日文关键词映射表
+        jp_cn_map = {
+            '進化': '进化',
+            '登場': '登场',
+            '攻撃': '攻击',
+            '進化元': '进化元',
+            '手札': '手牌',
+            'ゴミ箱': '垃圾区',
+        }
+        for jp, cn in jp_cn_map.items():
+            if jp in keyword:
+                keyword = keyword.replace(jp, cn)
+        
         for ruling in self.rulings:
             question = ruling.get('question', '').lower()
             answer = ruling.get('answer', '').lower()
@@ -160,6 +177,17 @@ class DTCGJudger:
             包含关键词的规则段落列表
         """
         results = []
+        
+        # 规则术语别名映射
+        rule_aliases = {
+            '派生诱发': '派生触发',
+            '激活阶段': '活跃阶段',
+            '休眠': '休息',
+            '同时诱发': '同时触发',
+        }
+        for original, alias in rule_aliases.items():
+            if original in keyword:
+                keyword = keyword.replace(original, alias)
         
         # 按行分割规则书
         lines = self.rules.split('\n')
