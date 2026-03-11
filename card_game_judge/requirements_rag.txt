@@ -1,0 +1,17 @@
+# RAG 系统依赖
+
+# 向量数据库
+chromadb>=0.4.0
+
+# 嵌入模型
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+
+# 搜索算法
+rank-bm25>=0.2.2
+
+# 基础依赖
+numpy>=1.24.0
+
+# UI 界面
+gradio>=4.0.0

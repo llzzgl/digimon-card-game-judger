@@ -1,0 +1,240 @@
+"""
+搜索引擎实现
+
+支持：
+- 向量搜索
+- 关键词搜索（BM25）
+- 混合搜索
+- 重排序
+"""
+import re
+from typing import List, Dict, Optional, Tuple
+import numpy as np
+from .types import SearchResult, SearchMode, DocumentType, SearchConfig
+
+
+def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
+    """计算余弦相似度"""
+    arr1 = np.array(vec1)
+    arr2 = np.array(vec2)
+    dot_product = np.dot(arr1, arr2)
+    norm1 = np.linalg.norm(arr1)
+    norm2 = np.linalg.norm(arr2)
+    if norm1 < 1e-10 or norm2 < 1e-10:
+        return 0.0
+    return float(dot_product / (norm1 * norm2))
+
+
+def bm25_score(query_terms: List[str], doc_terms: List[str], 
+               avg_doc_length: float, k1: float = 1.5, b: float = 0.75) -> float:
+    """
+    计算 BM25 分数
+    
+    Args:
+        query_terms: 查询词列表
+        doc_terms: 文档词列表
+        avg_doc_length: 平均文档长度
+        k1: BM25 参数
+        b: BM25 参数
+    """
+    doc_length = len(doc_terms)
+    doc_term_freq = {}
+    for term in doc_terms:
+        doc_term_freq[term] = doc_term_freq.get(term, 0) + 1
+    
+    score = 0.0
+    for term in query_terms:
+        if term in doc_term_freq:
+            tf = doc_term_freq[term]
+            # 简化的 IDF（实际应该基于整个语料库）
+            idf = 1.0
+            numerator = tf * (k1 + 1)
+            denominator = tf + k1 * (1 - b + b * (doc_length / avg_doc_length))
+            score += idf * (numerator / denominator)
+    
+    return score
+
+
+def tokenize_chinese(text: str) -> List[str]:
+    """
+    简单的中文分词
+    提取：汉字词、英文词、数字
+    """
+    # 提取连续的汉字、英文、数字
+    tokens = re.findall(r'[\u4e00-\u9fff]+|[a-zA-Z]+|[0-9]+', text.lower())
+    return tokens
+
+
+def extract_keywords(query: str) -> List[str]:
+    """
+    提取查询关键词
+    """
+    # 停用词
+    stop_words = {
+        '的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个',
+        '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好',
+        '自己', '这', '那', '什么', '怎么', '为什么', '吗', '呢', '吧', '啊'
+    }
+    
+    tokens = tokenize_chinese(query)
+    keywords = [t for t in tokens if t not in stop_words and len(t) > 1]
+    return keywords
+
+
+class HybridSearchEngine:
+    """混合搜索引擎"""
+    
+    def __init__(self, config: SearchConfig):
+        self.config = config
+    
+    def search_vector(
+        self,
+        query_embedding: List[float],
+        doc_embeddings: List[Tuple[str, List[float], Dict]],
+        top_k: int
+    ) -> List[Tuple[str, float, Dict]]:
+        """
+        向量搜索
+        
+        Args:
+            query_embedding: 查询向量
+            doc_embeddings: [(doc_id, embedding, metadata), ...]
+            top_k: 返回结果数
+        
+        Returns:
+            [(doc_id, score, metadata), ...]
+        """
+        results = []
+        for doc_id, doc_emb, metadata in doc_embeddings:
+            score = cosine_similarity(query_embedding, doc_emb)
+            results.append((doc_id, score, metadata))
+        
+        # 按分数排序
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results[:top_k]
+    
+    def search_keyword(
+        self,
+        query: str,
+        documents: List[Tuple[str, str, Dict]],
+        top_k: int
+    ) -> List[Tuple[str, float, Dict]]:
+        """
+        关键词搜索（BM25）
+        
+        Args:
+            query: 查询文本
+            documents: [(doc_id, content, metadata), ...]
+            top_k: 返回结果数
+        
+        Returns:
+            [(doc_id, score, metadata), ...]
+        """
+        query_terms = extract_keywords(query)
+        if not query_terms:
+            return []
+        
+        # 计算平均文档长度
+        doc_lengths = [len(tokenize_chinese(doc[1])) for doc in documents]
+        avg_doc_length = sum(doc_lengths) / len(doc_lengths) if doc_lengths else 1.0
+        
+        results = []
+        for doc_id, content, metadata in documents:
+            doc_terms = tokenize_chinese(content)
+            score = bm25_score(query_terms, doc_terms, avg_doc_length)
+            if score > 0:
+                results.append((doc_id, score, metadata))
+        
+        # 按分数排序
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results[:top_k]
+    
+    def merge_results(
+        self,
+        vector_results: List[Tuple[str, float, Dict]],
+        keyword_results: List[Tuple[str, float, Dict]]
+    ) -> List[Tuple[str, float, Dict]]:
+        """
+        合并向量和关键词搜索结果
+        
+        使用加权融合策略
+        """
+        # 归一化分数
+        def normalize_scores(results: List[Tuple[str, float, Dict]]) -> Dict[str, float]:
+            if not results:
+                return {}
+            scores = [r[1] for r in results]
+            max_score = max(scores) if scores else 1.0
+            min_score = min(scores) if scores else 0.0
+            score_range = max_score - min_score
+            if score_range < 1e-10:
+                return {r[0]: 1.0 for r in results}
+            return {r[0]: (r[1] - min_score) / score_range for r in results}
+        
+        vector_scores = normalize_scores(vector_results)
+        keyword_scores = normalize_scores(keyword_results)
+        
+        # 合并
+        all_doc_ids = set(vector_scores.keys()) | set(keyword_scores.keys())
+        merged = []
+        
+        for doc_id in all_doc_ids:
+            vec_score = vector_scores.get(doc_id, 0.0)
+            kw_score = keyword_scores.get(doc_id, 0.0)
+            
+            # 加权融合
+            final_score = (
+                self.config.vector_weight * vec_score +
+                self.config.keyword_weight * kw_score
+            )
+            
+            # 获取元数据（优先从向量结果）
+            metadata = None
+            for r in vector_results:
+                if r[0] == doc_id:
+                    metadata = r[2]
+                    break
+            if metadata is None:
+                for r in keyword_results:
+                    if r[0] == doc_id:
+                        metadata = r[2]
+                        break
+            
+            if metadata:
+                merged.append((doc_id, final_score, metadata))
+        
+        # 按分数排序
+        merged.sort(key=lambda x: x[1], reverse=True)
+        return merged
+    
+    def rerank(
+        self,
+        query: str,
+        results: List[Tuple[str, float, Dict, str]]
+    ) -> List[Tuple[str, float, Dict, str]]:
+        """
+        重排序结果
+        
+        基于查询词在文档中的位置和频率
+        """
+        if not self.config.enable_rerank:
+            return results
+        
+        query_terms = extract_keywords(query)
+        if not query_terms:
+            return results
+        
+        reranked = []
+        for doc_id, score, metadata, content in results:
+            # 计算查询词覆盖率
+            content_lower = content.lower()
+            matches = sum(1 for term in query_terms if term in content_lower)
+            coverage = matches / len(query_terms) if query_terms else 0.0
+            
+            # 调整分数
+            adjusted_score = score * (1.0 + 0.2 * coverage)
+            reranked.append((doc_id, adjusted_score, metadata, content))
+        
+        # 重新排序
+        reranked.sort(key=lambda x: x[1], reverse=True)
+        return reranked

@@ -209,6 +209,7 @@
 
         <div class="tabs">
             <button class="tab active" data-tab="ask">💬 提问</button>
+            <button class="tab" data-tab="memory">🧠 记忆</button>
             <button class="tab" data-tab="docs">📚 知识库</button>
         </div>
 
@@ -232,10 +233,50 @@
                 <h2>⚖️ AI 分析 <span style="font-size: 0.7em; color: #f90; font-weight: normal;">（仅供参考，复杂情况请以官方裁定为准）</span></h2>
                 <div id="answer" class="answer-content"></div>
                 
+                <!-- 记忆反馈区域 -->
+                <div id="memory-feedback" style="margin-top: 20px; padding: 16px; background: rgba(79,195,247,0.1); border-radius: 8px; border: 1px solid rgba(79,195,247,0.3);">
+                    <h3 style="font-size: 0.95em; color: #4fc3f7; margin-bottom: 12px;">🧠 记忆反馈</h3>
+                    <p style="font-size: 0.9em; color: #aaa; margin-bottom: 12px;">这个答案对您有帮助吗？如果正确，我可以将其保存为记忆，以便下次更快地回答类似问题。</p>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button class="btn btn-primary" onclick="saveAsMemory(true)" style="padding: 8px 20px;">✅ 正确，保存为记忆</button>
+                        <button class="btn btn-secondary" onclick="saveAsMemory(false)" style="padding: 8px 20px;">❌ 不正确</button>
+                        <span id="memory-status" style="margin-left: 10px; font-size: 0.9em; color: #888;"></span>
+                    </div>
+                </div>
+                
                 <div class="sources" style="margin-top: 20px;">
                     <h3>📚 规则参考 (点击展开)</h3>
                     <div id="sources-list"></div>
                 </div>
+            </div>
+        </div>
+
+        <div id="tab-memory" class="tab-content">
+            <div class="card">
+                <h2>📊 记忆统计</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-memory-total">-</div>
+                        <div class="stat-label">记忆总数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-memory-confirmed">-</div>
+                        <div class="stat-label">已验证</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-memory-recent">-</div>
+                        <div class="stat-label">最近使用</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="loadMemoryStats()">🔄 刷新</button>
+            </div>
+            <div class="card">
+                <h2>🔍 搜索记忆</h2>
+                <textarea id="memory-search-query" placeholder="输入问题搜索相关记忆..." style="min-height: 60px;"></textarea>
+                <div style="margin-top: 12px;">
+                    <button class="btn btn-primary" onclick="searchMemories()">🔍 搜索</button>
+                </div>
+                <div id="memory-search-results" style="margin-top: 20px;"></div>
             </div>
         </div>
 
@@ -270,6 +311,10 @@
     <script>
         const API_BASE = '';  // 同源，留空即可
         
+        // 全局变量：当前问答
+        let currentQuestion = '';
+        let currentAnswer = '';
+        
         // Tab 切换
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -287,6 +332,9 @@
                 alert('请输入问题');
                 return;
             }
+            
+            // 保存当前问答
+            currentQuestion = question;
             
             const btn = document.getElementById('ask-btn');
             const status = document.getElementById('status');
@@ -316,6 +364,9 @@
                 }
                 
                 const data = await res.json();
+                
+                // 保存当前答案
+                currentAnswer = data.answer;
                 
                 // 显示卡牌数据（直接从数据库，100%准确）
                 const cardsSection = document.getElementById('cards-section');
@@ -356,12 +407,122 @@
                 answerSection.classList.add('show');
                 status.innerHTML = `✅ 完成 (${elapsed}s)`;
                 
+                // 重置记忆反馈状态
+                document.getElementById('memory-status').textContent = '';
+                
             } catch (err) {
                 document.getElementById('answer').innerHTML = `<div class="error">❌ 查询失败: ${err.message}<br><br>请检查后端服务是否正常运行</div>`;
                 answerSection.classList.add('show');
                 status.innerHTML = '❌ 失败';
             } finally {
                 btn.disabled = false;
+            }
+        }
+        
+        // 保存为记忆
+        async function saveAsMemory(isCorrect) {
+            if (!currentQuestion || !currentAnswer) {
+                alert('没有可保存的问答');
+                return;
+            }
+            
+            const memoryStatus = document.getElementById('memory-status');
+            memoryStatus.innerHTML = '<span class="loading"><span class="spinner"></span>正在保存...</span>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('question', currentQuestion);
+                formData.append('answer', currentAnswer);
+                formData.append('user_confirmed', isCorrect);
+                formData.append('importance', isCorrect ? '3' : '1');  // 正确的标记为高重要性
+                
+                const res = await fetch(API_BASE + '/memory/save', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                
+                const data = await res.json();
+                
+                if (isCorrect) {
+                    memoryStatus.innerHTML = '✅ 已保存为记忆';
+                    memoryStatus.style.color = '#4fc3f7';
+                } else {
+                    memoryStatus.innerHTML = '📝 已记录反馈';
+                    memoryStatus.style.color = '#888';
+                }
+                
+                // 3秒后隐藏状态
+                setTimeout(() => {
+                    memoryStatus.textContent = '';
+                }, 3000);
+                
+            } catch (err) {
+                memoryStatus.innerHTML = `❌ 保存失败: ${err.message}`;
+                memoryStatus.style.color = '#ff8a80';
+            }
+        }
+        
+        // 搜索记忆
+        async function searchMemories() {
+            const query = document.getElementById('memory-search-query').value.trim();
+            if (!query) {
+                alert('请输入搜索内容');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('memory-search-results');
+            resultsDiv.innerHTML = '<span class="loading"><span class="spinner"></span>搜索中...</span>';
+            
+            try {
+                const res = await fetch(API_BASE + `/memory/search?query=${encodeURIComponent(query)}&top_k=5`);
+                const data = await res.json();
+                const memories = data.data || [];
+                
+                if (memories.length === 0) {
+                    resultsDiv.innerHTML = '<p style="color:#888">未找到相关记忆</p>';
+                    return;
+                }
+                
+                resultsDiv.innerHTML = memories.map(mem => `
+                    <div class="source-item" onclick="this.classList.toggle('expanded')" style="margin-bottom: 12px;">
+                        <div class="source-title">
+                            ${mem.user_confirmed ? '✅' : '❓'} ${escapeHtml(mem.question)}
+                        </div>
+                        <div class="source-type">
+                            相似度: ${(mem.similarity * 100).toFixed(1)}% · 
+                            重要性: ${'⭐'.repeat(mem.importance)}
+                        </div>
+                        <div class="source-excerpt">
+                            <strong>答案：</strong><br>
+                            ${escapeHtml(mem.answer)}<br><br>
+                            <strong>总结：</strong><br>
+                            ${escapeHtml(mem.summary)}
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (err) {
+                resultsDiv.innerHTML = `<div class="error">搜索失败: ${err.message}</div>`;
+            }
+        }
+        
+        // 加载记忆统计
+        async function loadMemoryStats() {
+            try {
+                const res = await fetch(API_BASE + '/memory/stats');
+                const data = await res.json();
+                const stats = data.data || {};
+                
+                document.getElementById('stat-memory-total').textContent = stats.total_memories || 0;
+                document.getElementById('stat-memory-confirmed').textContent = '-';  // 需要额外查询
+                document.getElementById('stat-memory-recent').textContent = stats.short_term_memories || 0;
+                
+            } catch (err) {
+                console.error('加载记忆统计失败:', err);
             }
         }
         

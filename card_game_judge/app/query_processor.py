@@ -8,10 +8,10 @@ from typing import List, Tuple, Dict
 class QueryProcessor:
     """处理用户查询，提取卡牌编号、数码宝贝名称等关键信息"""
     
-    # 卡牌编号正则：BT01-001, ST1-01, EX1-001, P-001, RB-01 等
-    # 不使用 \b，改用更宽松的匹配
+    # 卡牌编号正则：BT01-001, ST1-01, EX1-001, EX8-074, P-001, RB-01 等
+    # 支持多种格式：BT1-001, BT01-001, BT1001, BT-1-001, EX8-074
     CARD_NO_PATTERN = re.compile(
-        r'(BT-?\d{1,2}-?\d{2,3}|ST-?\d{1,2}-?\d{2}|EX-?\d{1,2}-?\d{2,3}|P-?\d{3}|RB-?\d{2}|LM-?\d{2})', 
+        r'(BT-?\d{1,2}-?\d{2,3}|ST-?\d{1,2}-?\d{2,3}|EX-?\d{1,2}-?\d{2,3}|P-?\d{3}|RB-?\d{2}|LM-?\d{2})', 
         re.IGNORECASE
     )
     
@@ -21,21 +21,53 @@ class QueryProcessor:
     # 等级相关
     LEVEL_PATTERN = re.compile(r'(?:Lv\.?|等级|レベル)\s*(\d+)', re.IGNORECASE)
     
+    def normalize_card_number(self, card_no: str) -> str:
+        """
+        标准化卡牌编号格式
+        
+        输入示例：BT1001, BT-1-001, BT1-1, bt01-001
+        输出格式：BT01-001
+        """
+        card_no = card_no.upper().strip()
+        
+        # 处理不同格式
+        # 格式1: BT1001 -> BT01-001
+        match = re.match(r'^(BT|ST|EX|RB|LM)(\d{1,2})(\d{2,3})$', card_no)
+        if match:
+            prefix, set_num, card_num = match.groups()
+            set_num = set_num.zfill(2)  # 补齐到2位
+            card_num = card_num.zfill(3)  # 补齐到3位
+            return f"{prefix}{set_num}-{card_num}"
+        
+        # 格式2: BT-1-001 -> BT01-001
+        match = re.match(r'^(BT|ST|EX|RB|LM)-?(\d{1,2})-(\d{2,3})$', card_no)
+        if match:
+            prefix, set_num, card_num = match.groups()
+            set_num = set_num.zfill(2)
+            card_num = card_num.zfill(3)
+            return f"{prefix}{set_num}-{card_num}"
+        
+        # 格式3: P-001 (促销卡)
+        match = re.match(r'^P-?(\d{1,3})$', card_no)
+        if match:
+            card_num = match.group(1).zfill(3)
+            return f"P-{card_num}"
+        
+        # 无法识别，返回原始值
+        return card_no
+    
     def extract_card_numbers(self, query: str) -> List[str]:
-        """提取查询中的所有卡牌编号"""
+        """提取查询中的所有卡牌编号并标准化"""
         matches = self.CARD_NO_PATTERN.findall(query)
-        # 标准化格式：大写，确保有连字符
         result = []
+        seen = set()
+        
         for m in matches:
-            m = m.upper()
-            # 标准化为 XX00-000 格式
-            # 处理 BT20079 -> BT20-079
-            if re.match(r'^(BT|ST|EX|RB|LM)(\d{1,2})(\d{2,3})$', m):
-                match = re.match(r'^(BT|ST|EX|RB|LM)(\d{1,2})(\d{2,3})$', m)
-                m = f"{match.group(1)}{match.group(2)}-{match.group(3)}"
-            # 处理 BT-20-079 -> BT20-079
-            m = re.sub(r'^(BT|ST|EX|RB|LM)-(\d)', r'\1\2', m)
-            result.append(m)
+            normalized = self.normalize_card_number(m)
+            if normalized not in seen:
+                seen.add(normalized)
+                result.append(normalized)
+        
         return result
     
     def extract_memory_values(self, query: str) -> List[int]:

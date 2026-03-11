@@ -1,0 +1,200 @@
+"""
+结构化 Prompt 构建器
+
+功能：
+- 根据检索结果构建结构化 Prompt
+- 区分不同类型的上下文 (规则/裁定/卡牌)
+- 添加引用溯源
+"""
+from typing import List, Optional, Dict
+from .types import SearchResult, DocumentType
+
+
+class PromptBuilder:
+    """Prompt 构建器"""
+    
+    def __init__(self):
+        """初始化 Prompt 构建器"""
+        pass
+    
+    def build(
+        self,
+        query: str,
+        search_results: List[SearchResult],
+        card_data: Optional[List[Dict]] = None
+    ) -> str:
+        """
+        构建结构化 Prompt
+        
+        Args:
+            query: 用户问题
+            search_results: 搜索结果
+            card_data: 额外的卡牌数据
+        
+        Returns:
+            构建好的 Prompt
+        """
+        # 按文档类型分组
+        rules = []
+        rulings = []
+        cards = []
+        
+        for result in search_results:
+            if result.doc_type == DocumentType.RULE:
+                rules.append(result)
+            elif result.doc_type == DocumentType.RULING:
+                rulings.append(result)
+            elif result.doc_type == DocumentType.CARD:
+                cards.append(result)
+        
+        # 添加额外的卡牌数据
+        if card_data:
+            for card in card_data:
+                cards.append(self._format_card_dict(card))
+        
+        # 构建 Prompt
+        prompt_parts = []
+        
+        # 系统角色
+        prompt_parts.append(self._build_system_role())
+        
+        # 相关规则
+        if rules:
+            prompt_parts.append(self._build_rules_section(rules))
+        
+        # 官方裁定
+        if rulings:
+            prompt_parts.append(self._build_rulings_section(rulings))
+        
+        # 涉及卡牌
+        if cards:
+            prompt_parts.append(self._build_cards_section(cards))
+        
+        # 用户问题
+        prompt_parts.append(self._build_question_section(query))
+        
+        # 回答要求
+        prompt_parts.append(self._build_requirements())
+        
+        return "\n\n".join(prompt_parts)
+    
+    def _build_system_role(self) -> str:
+        """构建系统角色说明"""
+        return """你是数码宝贝卡牌游戏 (Digimon Card Game) 的专业裁判助手。
+你的职责是基于官方规则和裁定，为玩家提供准确、权威的裁判意见。"""
+    
+    def _build_rules_section(self, rules: List[SearchResult]) -> str:
+        """构建规则部分"""
+        section = ["【相关规则】"]
+        
+        for i, rule in enumerate(rules, 1):
+            source = self._format_source(rule)
+            section.append(f"{i}. {rule.content}")
+            section.append(f"   来源: {source}")
+        
+        return "\n".join(section)
+    
+    def _build_rulings_section(self, rulings: List[SearchResult]) -> str:
+        """构建裁定部分"""
+        section = ["【官方裁定】"]
+        
+        for i, ruling in enumerate(rulings, 1):
+            source = self._format_source(ruling)
+            section.append(f"{i}. {ruling.content}")
+            section.append(f"   来源: {source}")
+        
+        return "\n".join(section)
+    
+    def _build_cards_section(self, cards: List) -> str:
+        """构建卡牌部分"""
+        section = ["【涉及卡牌】"]
+        
+        for i, card in enumerate(cards, 1):
+            if isinstance(card, SearchResult):
+                section.append(f"{i}. {card.content}")
+                if card.metadata.card_no:
+                    section.append(f"   卡号: {card.metadata.card_no}")
+            elif isinstance(card, str):
+                section.append(f"{i}. {card}")
+        
+        return "\n".join(section)
+    
+    def _build_question_section(self, query: str) -> str:
+        """构建问题部分"""
+        return f"""【玩家问题】
+{query}"""
+    
+    def _build_requirements(self) -> str:
+        """构建回答要求"""
+        return """【回答要求】
+1. 基于上述规则和裁定给出准确的裁判意见
+2. 如果规则或裁定有明确说明，请引用具体条款
+3. 如果涉及多张卡牌的互动，请逐步分析
+4. 如果信息不足以做出判断，请说明需要补充的信息
+5. 使用清晰、专业的语言，避免歧义
+6. 在回答末尾注明引用的来源"""
+    
+    def _format_source(self, result: SearchResult) -> str:
+        """格式化来源信息"""
+        parts = []
+        
+        if result.metadata.title:
+            parts.append(result.metadata.title)
+        
+        if result.metadata.version:
+            parts.append(f"版本 {result.metadata.version}")
+        
+        if result.metadata.source:
+            parts.append(result.metadata.source.value)
+        
+        return " - ".join(parts) if parts else "未知来源"
+    
+    def _format_card_dict(self, card: Dict) -> str:
+        """格式化卡牌字典为文本"""
+        parts = []
+        
+        if card.get('card_no'):
+            parts.append(f"卡牌编号: {card['card_no']}")
+        if card.get('name_cn'):
+            parts.append(f"中文名: {card['name_cn']}")
+        if card.get('name_jp'):
+            parts.append(f"日文名: {card['name_jp']}")
+        if card.get('type'):
+            parts.append(f"类型: {card['type']}")
+        if card.get('color'):
+            parts.append(f"颜色: {card['color']}")
+        if card.get('level'):
+            parts.append(f"等级: Lv.{card['level']}")
+        if card.get('play_cost'):
+            parts.append(f"登场费用: {card['play_cost']}")
+        if card.get('dp') and card['dp'] != '-':
+            parts.append(f"DP: {card['dp']}")
+        if card.get('effect'):
+            parts.append(f"效果: {card['effect']}")
+        if card.get('inherited_effect'):
+            parts.append(f"继承效果: {card['inherited_effect']}")
+        if card.get('security_effect'):
+            parts.append(f"安防效果: {card['security_effect']}")
+        
+        return "\n".join(parts)
+    
+    def build_simple(self, query: str, context: str) -> str:
+        """
+        构建简单 Prompt (用于快速查询)
+        
+        Args:
+            query: 用户问题
+            context: 上下文信息
+        
+        Returns:
+            简单 Prompt
+        """
+        return f"""你是数码宝贝卡牌游戏的裁判助手。
+
+【参考信息】
+{context}
+
+【问题】
+{query}
+
+请基于参考信息回答问题。"""

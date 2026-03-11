@@ -1,0 +1,10 @@
+# LLM提取工具依赖
+
+# 通义千问（使用OpenAI兼容接口）
+openai>=1.0.0
+
+# Gemini（可选）
+google-generativeai>=0.7.0
+
+# 环境变量管理
+python-dotenv>=1.0.0
