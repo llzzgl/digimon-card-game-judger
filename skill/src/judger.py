@@ -213,14 +213,39 @@ class DTCGJudger:
         """
         term = term.strip()
         
+        # 优先查找精确匹配
+        exact_match = None
+        
         # 在术语映射中查找
         for cn_term, jp_terms in self.terms.items():
             if direction == 'cn2jp':
-                if term in cn_term or cn_term in term:
+                # 优先精确匹配
+                if term == cn_term:
                     if isinstance(jp_terms, list) and jp_terms:
                         return jp_terms[0]
                     return str(jp_terms)
+                # 其次查找包含匹配
+                if term in cn_term and exact_match is None:
+                    if isinstance(jp_terms, list) and jp_terms:
+                        exact_match = jp_terms[0]
+                    else:
+                        exact_match = str(jp_terms)
             elif direction == 'jp2cn':
+                if isinstance(jp_terms, list):
+                    for jp_term in jp_terms:
+                        # 优先精确匹配
+                        if term == jp_term:
+                            return cn_term.split('=')[0] if '=' in cn_term else cn_term
+                elif term == str(jp_terms):
+                    return cn_term.split('=')[0] if '=' in cn_term else cn_term
+        
+        # 返回最佳匹配
+        if exact_match:
+            return exact_match
+        
+        # 最后尝试模糊匹配
+        for cn_term, jp_terms in self.terms.items():
+            if direction == 'jp2cn':
                 if isinstance(jp_terms, list):
                     for jp_term in jp_terms:
                         if term in jp_term or jp_term in term:
