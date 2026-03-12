@@ -1,8 +1,8 @@
 # DTCG Judger 重构 - 进度报告
 
-**汇报时间**: 2026-03-12 12:49 GMT+8  
+**汇报时间**: 2026-03-12 16:41 GMT+8  
 **执行人**: 管理者 🎯  
-**当前阶段**: 第二组任务完成 (爬虫/翻译 Skill 化)
+**当前阶段**: 第二组任务完成，待修复中优先级问题 (Git 分支领先远程 1 commit)
 
 ---
 
@@ -247,7 +247,9 @@ dtcg_judger/
 | 2026-03-12 09:24 | 翻译 Skill 验证完成 (89.4%) | ✅ |
 | 2026-03-12 09:30 | 爬虫 Skill 重构完成 (100%) | ✅ |
 | 2026-03-12 09:25 | Git 提交：添加第二组任务文档 | ✅ |
-| 2026-03-12 12:49 | 进度报告更新 (当前) | ✅ |
+| 2026-03-12 12:49 | 进度报告更新 | ✅ |
+| 2026-03-12 14:53 | 进度报告更新 | ✅ |
+| 2026-03-12 16:41 | 进度报告更新 (当前) - Git 状态检查，待推送 | ✅ |
 
 ---
 
@@ -380,7 +382,7 @@ dtcg_judger/
 | 'security'英文搜索支持 | ⏳ 待修复 | 工程师 B | 测试者 |
 | 文档更新 | ⏳ 待执行 | 工程师 A | - |
 
-### 🔄 最新任务分配 (12:49)
+### 🔄 最新任务分配 (14:53)
 
 **已完成任务 - 已验证**:
 - ✅ E2E 测试数据获取验证 → **测试者验证通过**
@@ -402,18 +404,18 @@ dtcg_judger/
 - 🟢 返回类型统一 + Skill 键名修正 → **工程师 B** (待执行)
 - 🟢 '机械暴龙兽'/'security'搜索优化 → **工程师 B** (待执行)
 - 🟢 文档更新 → **工程师 A** (待执行)
-- 🟢 Git 提交推送 → **管理者** (分支已与远程同步)
+- 🟢 Git 提交推送 → **管理者** (分支已与远程同步，领先 1 commit)
 
 **当前状态总结**:
 - 工程师 A: 🟡 核心任务 98% 完成，待修复纠错模式解析 (30 分钟)
 - 工程师 B: 🟡 核心任务 95% 完成，待补充常用简称映射 (45 分钟)
-- 工程师 C: ✅ 爬虫 Skill 化 100% 完成 (Subagent)
-- 工程师 D: ✅ 翻译 Skill 化 89% 完成 (Subagent, 需 API 密钥配置)
+- 工程师 C: ✅ 爬虫 Skill 化 100% 完成 (Subagent) - **已验证**
+- 工程师 D: ✅ 翻译 Skill 化 89% 完成 (Subagent, 需 API 密钥配置) - **已验证**
 - 测试者: ✅ 所有验证任务已完成 (多轮验证报告已生成)
 
 ---
 
-## 📋 本次汇报摘要 (12:49)
+## 📋 本次汇报摘要 (16:41)
 
 **最新进展**:
 - ✅ **第二组任务完成**: 爬虫 Skill 化 (100%) + 翻译 Skill 化 (89%)
@@ -421,15 +423,23 @@ dtcg_judger/
 - ✅ 翻译 Skill: 23/23 单元测试通过，89.4% 综合评分
 - ✅ Git 提交：添加第二组任务文档 (09:25)
 - 🟡 2 个中优先级问题待修复 (工程师 A/B 原任务)
+- 🔴 **Git 待推送**: 分支领先远程 1 commit，需执行 `git push`
+- 📌 **当前无已完成任务待分配给测试者** - 工程师 C/D 任务已由 Subagent 验证完成
 
 **工程师 A 状态**:
 - ✅ 核心任务 98% 完成
 - ⏳ 待修复：纠错模式解析失败 (test_correction_query_parsing, 30 分钟)
+  - **问题**: `parse_correction_query` 函数无法正确提取 `original_answer_ref`
+  - **测试查询**: "BT24-037 的原答案说不能激活，但根据规则 6-2 实际可以"
+  - **建议方案**: 修复正则表达式模式，确保匹配 "说...但" 结构
 - 📌 **当前无已完成任务待验证**
 
 **工程师 B 状态**:
 - ✅ 核心任务 95% 完成
 - ⏳ 待修复：常用简称映射缺失 (亚古/加布/V 仔/公爵等，45 分钟)
+  - **问题**: test_aliases.py 测试中 "V 仔" 搜索返回 0 结果
+  - **现状**: name_aliases.json 已有 "V 仔": "V 仔兽" 映射，但可能未正确加载
+  - **建议方案**: 检查 alias_map.json 加载逻辑，确保映射生效
 - 📌 **当前无已完成任务待验证**
 
 **工程师 C 状态** (Subagent - 爬虫 Skill):
@@ -437,26 +447,39 @@ dtcg_judger/
 - ✅ 16 个文件已创建，89,651 字节代码
 - ✅ 8/8 测试通过
 - ✅ 报告已生成：SCRAPER_SKILL_REPORT.md, TASK_CHECKLIST.md
-- 📌 **任务已完成，无需验证**
+- ✅ **已由测试者 Subagent 验证完成**
 
 **工程师 D 状态** (Subagent - 翻译 Skill):
 - ✅ 任务 89% 完成
 - ✅ 23/23 单元测试通过
-- ✅ 报告已生成：TRANSLATION_VALIDATION_REPORT.md
+- ✅ 报告已生成：TRANSLATION_VALIDATION_REPORT.md, VALIDATION_SUMMARY.md
 - ⚠️ 需用户配置 API 密钥 (OPENAI_API_KEY / GOOGLE_API_KEY)
-- 📌 **任务已完成，无需验证**
+- ✅ **已由测试者 Subagent 验证完成**
 
 **测试者状态**:
 - ✅ 所有验证任务已完成
-- ✅ 多轮验证报告已生成
+- ✅ 多轮验证报告已生成 (FINAL_VALIDATION_REPORT.md, TRANSLATION_VALIDATION_REPORT.md, VALIDATION_SUMMARY.md)
 - 📌 **当前无新任务待分配**
 
+**Git 状态** (16:41):
+- 分支：`refactor/2026-03-10`
+- 与远程关系：领先 1 commit
+- 待提交更改：进度报告文件、skill/src/judger.py、src/judger/api/modes.py
+- 待添加文件：SCRAPER_SKILL_REPORT.md, TASK_CHECKLIST.md, TRANSLATION_SKILL_REPORT.md, TRANSLATION_VALIDATION_REPORT.md, VALIDATION_SUMMARY.md, scraper_skill/, translation_skill/, db_updater_skill/, scripts/
+
 **任务分配**:
-- 🟡 **工程师 A**: 修复纠错模式解析 - ⏳ 待执行 (30 分钟)
-- 🟡 **工程师 B**: 补充常用简称映射 - ⏳ 待执行 (45 分钟)
+- 🟡 **工程师 A**: 修复纠错模式解析 - ⏳ 待执行 (30 分钟，test_correction_query_parsing 失败)
+- 🟡 **工程师 B**: 补充常用简称映射 - ⏳ 待执行 (45 分钟，亚古/加布/V 仔/公爵等简称)
 - 🟢 **工程师 B**: 低优先级问题修复 - ⏳ 待执行 (30 分钟)
 - 🟢 **工程师 A**: 文档更新 - ⏳ 待执行 (20 分钟)
-- ✅ **工程师 C/D**: Skill 化任务已完成
+- ✅ **工程师 C/D**: Skill 化任务已完成并验证
+- 🔴 **管理者**: Git 推送 - ⏳ **待执行** (分支领先远程 1 commit，需推送)
+
+**Git 状态** (16:41 检查):
+- 分支：`refactor/2026-03-10`
+- 状态：领先远程 1 commit
+- 未提交更改：DTCG 重构进度报告，skill/src/judger.py，src/judger/api/modes.py
+- 未跟踪文件：SCRAPER_SKILL_REPORT.md, TASK_CHECKLIST.md, TRANSLATION_SKILL_REPORT.md, TRANSLATION_VALIDATION_REPORT.md, VALIDATION_SUMMARY.md, scraper_skill/, translation_skill/, db_updater_skill/, scripts/, 及 debug 脚本若干
 
 **发布评估**:
 - ✅ 核心 Judger 功能测试通过率 > 90%
@@ -469,5 +492,5 @@ dtcg_judger/
 
 ---
 
-*报告生成时间：2026-03-12 12:49 (Asia/Shanghai)*  
-*下次自动报告：2026-03-12 13:49*
+*报告生成时间：2026-03-12 16:41 (Asia/Shanghai)*  
+*下次自动报告：2026-03-12 17:41*
