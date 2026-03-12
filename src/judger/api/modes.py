@@ -101,11 +101,13 @@ def parse_correction_query(query: str) -> dict:
         result["target_rule"] = f"规则 {rule_match.group(1)}"
     
     # 尝试提取答案引用（如 "原答案说..."）
+    # 使用 Unicode 转义序列（在 regex 中会被正确解释）
     answer_patterns = [
-        r'原答案 [说称是] (.+?)(?:，|。|但|$)',
-        r'之前的回答 [说称是] (.+?)(?:，|。|$)',
-        r'错误 [：:] (.+?)(?:，|。|$)',
-        r'说 (.+?)(?:，|。|但|$)'  # 更通用的匹配
+        r'\u539f\u7b54\u6848\u8bf4(.*?)(?:\uff0c|\u4f46|$)',  # 原答案说...（，|但 | 结束）
+        r'\u539f\u7b54\u6848[\u8bf4\u79f0\u662f](.*?)(?:\uff0c|\u3002|\u4f46|$)',  # 原答案说/称/是...
+        r'\u4e4b\u524d\u7684\u56de\u7b54[\u8bf4\u79f0\u662f](.*?)(?:\uff0c|\u3002|$)',  # 之前的回答...
+        r'\u9519\u8bef[\uff1a:](.*?)(?:\uff0c|\u3002|$)',  # 错误：...
+        r'\u8bf4(.*?)(?:\uff0c|\u3002|\u4f46|$)',  # 说...（通用匹配）
     ]
     for pattern in answer_patterns:
         match = re.search(pattern, query)
