@@ -16,6 +16,14 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
+# 导入图片下载模块
+try:
+    from image_downloader import ImageDownloader, DEFAULT_IMAGE_DIR
+    IMAGE_DOWNLOAD_ENABLED = True
+except ImportError:
+    IMAGE_DOWNLOAD_ENABLED = False
+    DEFAULT_IMAGE_DIR = "D:\\LLMProject\\dtcg_judger\\card_data\\images\\cn\\raw"
+
 
 # 默认数据文件路径
 DEFAULT_DATA_FILE = "digimon_cards_cn.json"
@@ -26,7 +34,7 @@ class DigimonCardDatabase:
     
     def __init__(self, data_file=DEFAULT_DATA_FILE):
         self.data_file = data_file
-        self.cards = {}  # 以card_no为key存储
+        self.cards = {}  # 以 card_no 为 key 存储
         self.load()
     
     def load(self):
@@ -35,7 +43,7 @@ class DigimonCardDatabase:
             try:
                 with open(self.data_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    # 转换为字典格式，以card_no为key
+                    # 转换为字典格式，以 card_no 为 key
                     if isinstance(data, list):
                         for card in data:
                             if card.get('card_no'):
@@ -44,10 +52,10 @@ class DigimonCardDatabase:
                         self.cards = data
                 print(f"已加载 {len(self.cards)} 张卡牌数据")
             except Exception as e:
-                print(f"加载数据失败: {e}")
+                print(f"加载数据失败：{e}")
                 self.cards = {}
         else:
-            print(f"数据文件不存在，将创建新文件: {self.data_file}")
+            print(f"数据文件不存在，将创建新文件：{self.data_file}")
             self.cards = {}
     
     def save(self):
@@ -61,7 +69,7 @@ class DigimonCardDatabase:
         """添加或更新单张卡牌"""
         card_no = card_info.get('card_no')
         if not card_no:
-            print("  ⚠ 卡牌编号为空，跳过")
+            print("  [WARN] 卡牌编号为空，跳过")
             return False
         
         self.cards[card_no] = card_info
@@ -134,13 +142,13 @@ class DigimonCardScraperV3:
                         time.sleep(0.5)
                         try:
                             btn.click()
-                            print(f"  ✓ 成功点击按钮")
+                            print(f"  [OK] 成功点击按钮")
                             time.sleep(3)
                             return True
                         except:
                             try:
                                 driver.execute_script("arguments[0].click();", btn)
-                                print(f"  ✓ 使用JS成功点击按钮")
+                                print(f"  [OK] 使用 JS 成功点击按钮")
                                 time.sleep(3)
                                 return True
                             except:
@@ -148,7 +156,7 @@ class DigimonCardScraperV3:
             except:
                 continue
         
-        print("  ✗ 未能点击搜索按钮")
+        print("  [FAIL] 未能点击搜索按钮")
         return False
     
     def get_card_links(self, driver):
@@ -236,26 +244,26 @@ class DigimonCardScraperV3:
             card_info['species'] = species_match.group(1).strip()
         
         # 进化条件
-        evo_cond_match = re.search(r'进化条件[：:]\s*(.+?)(?:\n进化\n|能力|效果)', full_text, re.DOTALL)
+        evo_cond_match = re.search(r'进化条件 [：:]\s*(.+?)(?:\n进化\n|能力 | 效果)', full_text, re.DOTALL)
         if evo_cond_match:
             card_info['evolution_condition'] = evo_cond_match.group(1).strip().replace('\n', ' ')
         
         # 能力/效果
-        effect_match = re.search(r'能力\n(.+?)(?:进化源能力|安防效果|收录信息)', full_text, re.DOTALL)
+        effect_match = re.search(r'能力\n(.+?)(?:进化源能力 | 安防效果 | 收录信息)', full_text, re.DOTALL)
         if effect_match:
             card_info['effect'] = effect_match.group(1).strip()
         else:
-            effect_match2 = re.search(r'效果\n(.+?)(?:进化源能力|安防效果|收录信息)', full_text, re.DOTALL)
+            effect_match2 = re.search(r'效果\n(.+?)(?:进化源能力 | 安防效果 | 收录信息)', full_text, re.DOTALL)
             if effect_match2:
                 card_info['effect'] = effect_match2.group(1).strip()
         
         # 进化源能力
-        inherited_match = re.search(r'进化源能力\n(.+?)(?:收录信息|卡片裁定|Page)', full_text, re.DOTALL)
+        inherited_match = re.search(r'进化源能力\n(.+?)(?:收录信息 | 卡片裁定|Page)', full_text, re.DOTALL)
         if inherited_match:
             card_info['inherited_effect'] = inherited_match.group(1).strip()
         
         # 安防效果
-        security_match = re.search(r'安防效果\n(.+?)(?:收录信息|卡片裁定|Page)', full_text, re.DOTALL)
+        security_match = re.search(r'安防效果\n(.+?)(?:收录信息 | 卡片裁定|Page)', full_text, re.DOTALL)
         if security_match:
             card_info['security_effect'] = security_match.group(1).strip()
         
@@ -270,6 +278,35 @@ class DigimonCardScraperV3:
         
         return card_info
     
+    def extract_image_url(self, driver):
+        """提取卡牌图片 URL"""
+        try:
+            # 方法 1: 通过 lazyLoad class 查找
+            img_elements = driver.find_elements(By.CSS_SELECTOR, "img.lazyLoad")
+            for img in img_elements:
+                src = img.get_attribute("src")
+                if src and "dtcg-wechat.moecard.cn" in src:
+                    return src
+            
+            # 方法 2: 通过 title 属性查找（包含"卡图"）
+            img_elements = driver.find_elements(By.XPATH, "//img[contains(@title, '卡图')]")
+            for img in img_elements:
+                src = img.get_attribute("src")
+                if src and "dtcg-wechat.moecard.cn" in src:
+                    return src
+            
+            # 方法 3: 查找所有图片，过滤出卡牌图片
+            all_imgs = driver.find_elements(By.TAG_NAME, "img")
+            for img in all_imgs:
+                src = img.get_attribute("src")
+                if src and "dtcg-wechat.moecard.cn/img/card/" in src:
+                    return src
+            
+            return ""
+        except Exception as e:
+            print(f"  [WARN] 提取图片 URL 失败：{e}")
+            return ""
+    
     def extract_card_detail(self, driver):
         """提取卡牌详情"""
         try:
@@ -280,6 +317,13 @@ class DigimonCardScraperV3:
             full_text = body.text
             
             card_info = self.parse_card_info(full_text, page_title, url)
+            
+            # 提取图片 URL
+            image_url = self.extract_image_url(driver)
+            card_info['image_url'] = image_url
+            if image_url:
+                print(f"[图片] {image_url[:60]}...")
+            
             return card_info
         except Exception as e:
             return {'error': str(e), 'url': driver.current_url}
@@ -298,55 +342,61 @@ class DigimonCardScraperV3:
         driver = self.setup_driver()
         
         try:
-            print(f"正在爬取: {card_url}")
+            print(f"正在爬取：{card_url}")
             driver.get(card_url)
             
             card_info = self.extract_card_detail(driver)
             
             if card_info.get('card_no'):
                 self.db.add_card(card_info)
-                print(f"✓ 已保存: {card_info.get('card_no')} - {card_info.get('name_cn')}")
+                print(f"[OK] 已保存：{card_info.get('card_no')} - {card_info.get('name_cn')}")
                 return card_info
             else:
-                print("✗ 无法获取卡牌信息")
+                print("[FAIL] 无法获取卡牌信息")
                 return None
                 
         except Exception as e:
-            print(f"错误: {e}")
+            print(f"错误：{e}")
             return None
         finally:
             driver.quit()
     
-    def scrape_all_cards(self):
-        """爬取所有卡牌"""
+    def scrape_all_cards(self, download_images: bool = False):
+        """
+        爬取所有卡牌
+        
+        Args:
+            download_images: 是否在爬取后下载图片（默认 False）
+        """
         driver = self.setup_driver()
         new_cards = 0
         skipped_cards = 0
+        cards_with_images = []  # 存储有图片 URL 的卡牌用于下载
         
         try:
-            print(f"正在访问: {self.base_url}")
+            print(f"正在访问：{self.base_url}")
             driver.get(self.base_url)
             time.sleep(5)
             
             if not self.click_search_button(driver):
-                print("\n无法点击搜索按钮，等待15秒手动操作...")
+                print("\n无法点击搜索按钮，等待 15 秒手动操作...")
                 time.sleep(15)
             
             page_num = 1
             
             while True:
                 if self.max_pages and page_num > self.max_pages:
-                    print(f"\n已达到最大页数: {self.max_pages}")
+                    print(f"\n已达到最大页数：{self.max_pages}")
                     break
                 
                 print(f"\n{'='*50}")
-                print(f"第 {page_num} 页 | 数据库: {self.db.count()} 张卡牌")
+                print(f"第 {page_num} 页 | 数据库：{self.db.count()} 张卡牌")
                 print(f"{'='*50}")
                 
                 card_links = self.get_card_links(driver)
                 
                 if not card_links:
-                    print("未找到卡牌，等待5秒后重试...")
+                    print("未找到卡牌，等待 5 秒后重试...")
                     time.sleep(5)
                     card_links = self.get_card_links(driver)
                     if not card_links:
@@ -373,16 +423,22 @@ class DigimonCardScraperV3:
                         if card_info.get('card_no'):
                             self.db.add_card(card_info, save_immediately=True)
                             new_cards += 1
-                            print(f"✓ 新增 {card_info.get('name_cn', '')}")
+                            
+                            # 收集有图片 URL 的卡牌
+                            if card_info.get('image_url'):
+                                cards_with_images.append(card_info)
+                                print(f"[OK] 新增 {card_info.get('name_cn', '')} [有图片]")
+                            else:
+                                print(f"[OK] 新增 {card_info.get('name_cn', '')}")
                         else:
-                            print("✗ 解析失败")
+                            print("[FAIL] 解析失败")
                         
                         driver.close()
                         driver.switch_to.window(driver.window_handles[0])
                         time.sleep(0.5)
                         
                     except Exception as e:
-                        print(f"✗ 错误: {e}")
+                        print(f"[ERROR] 错误：{e}")
                         if len(driver.window_handles) > 1:
                             driver.close()
                             driver.switch_to.window(driver.window_handles[0])
@@ -404,11 +460,21 @@ class DigimonCardScraperV3:
             print(f"\n{'='*50}")
             print(f"完成！新增 {new_cards} 张，跳过 {skipped_cards} 张已存在卡牌")
             print(f"数据库共 {self.db.count()} 张卡牌")
-            print(f"数据已保存到: {self.db.data_file}")
+            print(f"数据已保存到：{self.db.data_file}")
+            
+            # 下载图片
+            if download_images and IMAGE_DOWNLOAD_ENABLED and cards_with_images:
+                print(f"{'='*50}")
+                print(f"开始下载 {len(cards_with_images)} 张卡牌图片...")
+                print(f"{'='*50}\n")
+                
+                downloader = ImageDownloader()
+                downloader.download_batch(cards_with_images, delay=0.5)
+            
             print(f"{'='*50}")
             
         except Exception as e:
-            print(f"错误: {e}")
+            print(f"错误：{e}")
             import traceback
             traceback.print_exc()
         finally:
@@ -421,14 +487,15 @@ def update_single_card(card_url, data_file=DEFAULT_DATA_FILE):
     return scraper.scrape_single_card(card_url)
 
 
-def scrape_all_cards(headless=True, max_pages=None, data_file=DEFAULT_DATA_FILE):
+def scrape_all_cards(headless=True, max_pages=None, data_file=DEFAULT_DATA_FILE, download_images=False):
     """
     爬取所有卡牌的便捷函数
     
     Args:
-        headless: 是否使用无头模式（默认True）
-        max_pages: 最大爬取页数（默认None，爬取全部）
+        headless: 是否使用无头模式（默认 True）
+        max_pages: 最大爬取页数（默认 None，爬取全部）
         data_file: 数据文件路径
+        download_images: 是否下载图片（默认 False）
     
     Returns:
         DigimonCardDatabase: 卡牌数据库对象
@@ -437,14 +504,14 @@ def scrape_all_cards(headless=True, max_pages=None, data_file=DEFAULT_DATA_FILE)
         # 爬取所有卡牌
         db = scrape_all_cards()
         
-        # 只爬取前5页
+        # 只爬取前 5 页
         db = scrape_all_cards(max_pages=5)
         
-        # 显示浏览器窗口
-        db = scrape_all_cards(headless=False)
+        # 显示浏览器窗口并下载图片
+        db = scrape_all_cards(headless=False, download_images=True)
     """
     scraper = DigimonCardScraperV3(headless=headless, max_pages=max_pages, data_file=data_file)
-    scraper.scrape_all_cards()
+    scraper.scrape_all_cards(download_images=download_images)
     return scraper.db
 
 
@@ -470,8 +537,9 @@ def main():
     
     # headless=True 无头模式
     # max_pages=None 爬取所有页面
+    # download_images=True 下载图片
     scraper = DigimonCardScraperV3(headless=True, max_pages=None)
-    scraper.scrape_all_cards()
+    scraper.scrape_all_cards(download_images=False)
 
 
 if __name__ == "__main__":

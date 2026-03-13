@@ -1,4 +1,4 @@
-"""
+﻿"""
 数码宝贝卡牌爬虫脚本
 使用 Selenium 爬取 digimoncard.com 的卡牌信息
 """
@@ -25,6 +25,7 @@ except ImportError:
     USE_WEBDRIVER_MANAGER = False
 
 from models import Card, CardPack
+from image_downloader import ImageDownloader
 
 
 class DigimonCardScraper:
@@ -496,6 +497,24 @@ class DigimonCardScraper:
         print(f"汇总数据已保存到: {summary_file}")
     
     def scrape_single_pack(self, category_id: str) -> tuple:
+    
+    def download_card_images(self, cards, pack_id=None, delay=0.2):
+        """下载卡牌图片"""
+        if not self.download_images or not self.image_downloader:
+            # 即使没有初始化下载器，也创建临时下载器
+            from image_downloader import ImageDownloader
+            with ImageDownloader() as downloader:
+                from dataclasses import asdict
+                card_dicts = [asdict(c) for c in cards]
+                result = downloader.download_images(cards=card_dicts, pack_id=pack_id, delay=delay)
+                return result
+            return None
+        else:
+            from dataclasses import asdict
+            card_dicts = [asdict(c) for c in cards]
+            result = self.image_downloader.download_images(cards=card_dicts, pack_id=pack_id, delay=delay)
+            return result
+
         """
         爬取单个卡包
         
@@ -567,6 +586,8 @@ def main():
     parser.add_argument("--headless", action="store_true", default=True, help="无头模式")
     parser.add_argument("--no-headless", action="store_false", dest="headless", help="显示浏览器")
     parser.add_argument("--driver-path", type=str, help="ChromeDriver路径")
+    parser.add_argument("--download-images", action="store_true", help="下载卡牌图片")
+    parser.add_argument("--image-output", type=str, default=None, help="图片输出目录")
     
     args = parser.parse_args()
     
@@ -575,6 +596,8 @@ def main():
             # 爬取指定卡包
             pack, cards = scraper.scrape_single_pack(args.category)
             scraper.save_to_json([pack], cards)
+            if args.download_images:
+                download_images_for_cards(cards, pack_id=pack.pack_id, output_dir=args.image_output)
         else:
             # 爬取所有卡包
             packs, cards = scraper.scrape_all(max_packs=args.max_packs)
@@ -583,5 +606,21 @@ def main():
     print("\n爬取完成!")
 
 
+def download_images_for_cards(cards, pack_id=None, output_dir=None):
+    """独立函数：为卡牌列表下载图片"""
+    from image_downloader import ImageDownloader
+    from dataclasses import asdict
+    
+    with ImageDownloader(output_dir=output_dir) as downloader:
+        card_dicts = [asdict(c) for c in cards]
+        result = downloader.download_images(cards=card_dicts, pack_id=pack_id, delay=0.2)
+        return result
+
 if __name__ == "__main__":
     main()
+
+
+
+
+
+

@@ -27,6 +27,27 @@ check_*.py
 verify_*.py
 comprehensive_test.py
 
+# 测试输出
+test_*.txt
+*_output.txt
+*_summary.txt
+*_result.txt
+*_latest.txt
+*_check.txt
+*_out.txt
+*_debug.txt
+*_detailed.txt
+*_keys_check.txt
+
+# 调试/修复脚本
+debug_*.py
+fix_*.py
+temp_*.py
+
+# 验证报告（临时）
+VALIDATION_SUMMARY.md
+TASK_CHECKLIST.md
+
 # IDE
 .vscode/
 .idea/
