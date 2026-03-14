@@ -37,6 +37,16 @@ REM 检查 .env 文件
 if not exist ".env" (
     echo [警告] .env 文件不存在
     echo [提示] 请配置 GEMINI_API_KEY 以启用图片识别功能
+    echo [提示] 复制 .env.example 为 .env 并填写密钥
+    echo.
+) else (
+    echo [加载] 从 .env 加载配置...
+    for /f "delims=" %%a in ('findstr /v "^#" .env ^| findstr /v "^$"') do (
+        for /f "tokens=1,* delims==" %%b in ("%%a") do (
+            set "%%b=%%c"
+        )
+    )
+    echo [完成] 配置加载成功
     echo.
 )
 
