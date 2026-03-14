@@ -1,55 +1,58 @@
-# 数据文件
-card_game_judge/data/
-*.sqlite3
-data/
-digimon_cards_cn.json
-digimon_card_data/digimon_card_data_chiness/*.json
-digimon_card_data/*.json
-digimon_card_data/term_mapping/*.json
+# DTCG Judger Git Ignore
 
-# 环境变量文件（包含 API Key）
-.env
-*.env
-!.env.example
-
-# Python 缓存
+## Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
 
-# 备份文件
-*.bak
-
-# 测试脚本（临时）
+## 测试文件
+test.jpg
 test_*.py
-check_*.py
-verify_*.py
-comprehensive_test.py
+*_test.py
+test_output/
+*.log
 
-# 测试输出
-test_*.txt
-*_output.txt
-*_summary.txt
-*_result.txt
-*_latest.txt
-*_check.txt
-*_out.txt
-*_debug.txt
-*_detailed.txt
-*_keys_check.txt
-
-# 调试/修复脚本
+## 调试文件
 debug_*.py
-fix_*.py
 temp_*.py
+*_debug.py
+page_source.html
 
-# 验证报告（临时）
-VALIDATION_SUMMARY.md
-TASK_CHECKLIST.md
+## 临时报告
+PROGRESS_ALERT_*.md
+PROGRESS_REPORT_*.md
+TEST_REPORT_*.md
+URGENT_*.md
+*_REPORT_*.md
 
-# IDE
-.vscode/
-.idea/
+## 数据库
+*.db
+*.db-journal
+
+## 图片缓存
+card_data/images/jp/raw/*.jpg
+card_data/images/cn/raw/*.jpg
+card_data/images/cn/backup*/
+card_data/images/jp/backup*/
+
+## 技能验证
+scraper_skill_validation/
+translation_skill_validation/
+
+## 其他临时文件
+*.tmp
+*.bak
 *.swp
-*.swo
+.DS_Store
+Thumbs.db
+
+## 保留重要报告
+!COMPREHENSIVE_TEST_REPORT*.md
+!FINAL_*.md
