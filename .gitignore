@@ -53,6 +53,14 @@ CRON_*_REPORT.md
 *.bin
 *.pickle
 
+## 大文件 (>50MB)
+card_game_judge/data/rag_store/
+card_game_judge/data/memory/chroma/
+data/chroma_db/
+data/memory/chroma/
+*.sqlite3-shm
+*.sqlite3-wal
+
 ## 图片缓存
 card_data/images/jp/raw/*.jpg
 card_data/images/cn/raw/*.jpg
