@@ -1,5 +1,14 @@
 # DTCG Judger Git Ignore
 
+## 敏感信息（最优先）
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+credentials/
+
 ## Python
 __pycache__/
 *.py[cod]
@@ -12,39 +21,82 @@ venv/
 dist/
 build/
 
-## 测试文件
+## 测试和调试脚本（所有目录）
+**/test_*.py
+**/check_*.py
+**/fix_*.py
+**/verify_*.py
+**/debug_*.py
+**/temp_*.py
+**/*_test.py
 test.jpg
-test_*.py
-*_test.py
+test_*.json
+test_*.txt
 test_output/
 *.log
 
-## 调试文件
-debug_*.py
-temp_*.py
-*_debug.py
-page_source.html
+## 临时报告（所有目录）
+**/PROGRESS_*.md
+**/PROGRESS_ALERT_*.md
+**/PROGRESS_REPORT_*.md
+**/TEST_REPORT_*.md
+**/TEST_*.md
+**/*_REPORT.md
+**/*_REPORT_*.md
+**/*_SUMMARY.md
+**/*_COMPLETE_REPORT.md
+**/TASK_*_COMPLETION_REPORT.md
+**/INTEGRATION_SUMMARY.md
+**/JUDGE_INTEGRATION_COMPLETE.md
+**/METADATA_AND_RECOGNITION_PROGRESS.md
+**/FULL_IMAGE_CRAWL_AND_MULTIMODAL_PLAN.md
+**/CRON_*_REPORT.md
+**/VALIDATION_SUMMARY.md
+**/IMPLEMENTATION_SUMMARY.md
+**/FINAL_*.md
+**/FIX_*.md
+**/MIGRATION_*.md
+**/PHASE*_*.md
+**/*_ANALYSIS_REPORT.md
+**/*_VALIDATION_REPORT.md
+**/*_SKILL_REPORT.md
+**/URGENT_*.md
 
-## 临时报告
-PROGRESS_ALERT_*.md
-PROGRESS_REPORT_*.md
-TEST_REPORT_*.md
-URGENT_*.md
-*_REPORT_*.md
+## 保留的重要报告
+!OPTIMIZATION_COMPLETE_REPORT.md
+!COMPREHENSIVE_TEST_REPORT_2026-03-14.md
+!TASK_CHECKLIST.md
 
-## 数据库
+## 数据库和大文件
 *.db
 *.db-journal
+*.sqlite3
+*.bin
+*.pickle
+*.sqlite3-shm
+*.sqlite3-wal
+
+## 大文件目录 (>50MB)
+card_game_judge/data/rag_store/
+card_game_judge/data/memory/chroma/
+data/chroma_db/
+data/memory/chroma/
 
 ## 图片缓存
 card_data/images/jp/raw/*.jpg
 card_data/images/cn/raw/*.jpg
+card_data/images/cn/raw/*.png
+card_data/images/jp/raw/*.png
 card_data/images/cn/backup*/
 card_data/images/jp/backup*/
+card_data/images/cn/debug_*.html
+card_data/images/cn/page_after_switch.html
+card_data/images/cn/test_*.html
+card_data/images/VALIDATION_*.md
 
-## 技能验证
-scraper_skill_validation/
-translation_skill_validation/
+## 数据目录
+data/
+card_game_judge/data/
 
 ## 其他临时文件
 *.tmp
@@ -52,7 +104,4 @@ translation_skill_validation/
 *.swp
 .DS_Store
 Thumbs.db
-
-## 保留重要报告
-!COMPREHENSIVE_TEST_REPORT*.md
-!FINAL_*.md
+*v*.txt

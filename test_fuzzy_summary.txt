@@ -1,0 +1,153 @@
+﻿============================================================
+DTCG Judger 妯＄硦鏌ヨ娴嬭瘯濂椾欢
+============================================================
+
+=== 娴嬭瘯鍗＄墝缂栧彿鏍囧噯鍖?===
+Loaded 10135 cards
+Created card_no index: 6185 entries
+Created card_name index: 20487 keywords
+Loaded 4636 rulings
+Created ruling index: 12767 keywords
+Loaded rules (55635 chars)
+Created rule section index: 158 sections
+Loaded 2318 term entries
+Loaded 1052 name variants and 955 JP鈫扖N mappings
+Data loading and indexing completed in 0.55s
+[PASS] EX08-074        -> EX8-074
+[PASS] EX008-074       -> EX8-074
+[PASS] EX8-074         -> EX8-074
+[PASS] BT01-001        -> BT1-001
+[PASS] BT001-001       -> BT1-001
+[PASS] BT1-001         -> BT1-001
+[PASS] ST01-001        -> ST1-001
+[PASS] ST03-015        -> ST3-015
+[PASS] P01-001         -> P1-001
+[PASS] bt01_001        -> BT1-001
+[PASS] ex08-074        -> EX8-074
+
+缁撴灉锛?1 閫氳繃锛? 澶辫触
+
+=== 娴嬭瘯鍚嶇О鍙樹綋鏄犲皠鍔犺浇 ===
+Loaded 10135 cards
+Created card_no index: 6185 entries
+Created card_name index: 20487 keywords
+Loaded 4636 rulings
+Created ruling index: 12767 keywords
+Loaded rules (55635 chars)
+Created rule section index: 158 sections
+Loaded 2318 term entries
+Loaded 1052 name variants and 955 JP鈫扖N mappings
+Data loading and indexing completed in 0.54s
+[PASS] 鎴愬姛鍔犺浇 1052 鏉″彉浣撴槧灏?
+[PASS] 鍙樹綋 '缇庢潨鑾? -> '缇庢潨鑾庡吔'
+[PASS] 鍙樹綋 '甯屽皵寮? -> '瑗垮皵寮楀吔'
+[PASS] 鍙樹綋 '瑗垮皵鑺? -> '瑗垮皵寮楀吔'
+[PASS] 鍙樹綋 '鐏板濞? -> '鐏板濞樺吔'
+[PASS] 鍙樹綋 '闈撮澊' -> '闈撮澊鍏?
+
+=== 娴嬭瘯绮剧‘鍚嶇О鎼滅储 ===
+Loaded 10135 cards
+Created card_no index: 6185 entries
+Created card_name index: 20487 keywords
+Loaded 4636 rulings
+Created ruling index: 12767 keywords
+Loaded rules (55635 chars)
+Created rule section index: 158 sections
+Loaded 2318 term entries
+Loaded 1052 name variants and 955 JP鈫扖N mappings
+Data loading and indexing completed in 0.56s
+[PASS] '缇庢潨鑾庡吔' -> 鎵惧埌 4936 寮犲崱鐗?
+   绀轰緥锛欱T24-001銈偖銉兂
+[PASS] '瑗垮皵寮? -> 鎵惧埌 6 寮犲崱鐗?
+   绀轰緥锛欱T24-037銈枫儷銉曘偅銉笺儮銉?
+[PASS] '鎴樻枟鏆撮緳鍏? -> 鎵惧埌 4986 寮犲崱鐗?
+   绀轰緥锛欱T24-001銈偖銉兂
+[PASS] '濂ョ背鍔犲吔' -> 鎵惧埌 4928 寮犲崱鐗?
+   绀轰緥锛欱T24-001銈偖銉兂
+
+=== 娴嬭瘯鍙樹綋鍚嶇О鎼滅储 ===
+Loaded 10135 cards
+Created card_no index: 6185 entries
+Created card_name index: 20487 keywords
+Loaded 4636 rulings
+Created ruling index: 12767 keywords
+Loaded rules (55635 chars)
+Created rule section index: 158 sections
+Loaded 2318 term entries
+Loaded 1052 name variants and 955 JP鈫扖N mappings
+Data loading and indexing completed in 0.54s
+[WARN] '缇庢潨鑾? -> 'BT24-001銈偖銉兂' (鏈熸湜鍖呭惈锛氱編鏉滆帋鍏?
+[FAIL] '甯屽皵寮? -> 鏈壘鍒板崱鐗?(鏈熸湜锛氳タ灏斿紬)
+[WARN] '瑗垮皵鑺? -> 'BT24-037銈枫儷銉曘偅銉笺儮銉? (鏈熸湜鍖呭惈锛氳タ灏斿紬)
+[WARN] '鐏板濞? -> 'BT24-001銈偖銉兂' (鏈熸湜鍖呭惈锛氱伆濮戝鍏?
+[PASS] '闈撮澊' -> '闈撮澊鍏?
+[WARN] '绾㈣幉楠戝＋鍏? -> 'BT23-066銉炪偪銉夈偉銉儮銉? (鏈熸湜鍖呭惈锛氬叕鐖靛吔)
+[WARN] '閽㈤搧鍔犻瞾椴? -> 'BT24-046銈儷銉儮銉? (鏈熸湜鍖呭惈锛氶挗閾佸姞椴侀瞾鍏?
+[FAIL] '鍏繀鍏? -> 鏈壘鍒板崱鐗?(鏈熸湜锛氬厜鏄庡吔)
+
+缁撴灉锛? 閫氳繃锛? 澶辫触
+
+=== 娴嬭瘯妯＄硦鐩镐技搴︽悳绱?===
+Loaded 10135 cards
+Created card_no index: 6185 entries
+Created card_name index: 20487 keywords
+Loaded 4636 rulings
+Created ruling index: 12767 keywords
+Loaded rules (55635 chars)
+Created rule section index: 158 sections
+Loaded 2318 term entries
+Loaded 1052 name variants and 955 JP鈫扖N mappings
+Data loading and indexing completed in 0.54s
+[PASS] '鎴樻枟鏆撮緳' -> 鎵惧埌 4986 寮犲崱鐗?
+   鏈€浣冲尮閰嶏細BT24-001銈偖銉兂
+[PASS] '濂ョ背鍔? -> 鎵惧埌 4928 寮犲崱鐗?
+   鏈€浣冲尮閰嶏細BT24-001銈偖銉兂
+[PASS] '鍔犻瞾椴? -> 鎵惧埌 4922 寮犲崱鐗?
+   鏈€浣冲尮閰嶏細BT24-001銈偖銉兂
+[PASS] '澶╀娇鍏? -> 鎵惧埌 50 寮犲崱鐗?
+   鏈€浣冲尮閰嶏細娴峰ぉ浣垮吔
+[PASS] '缇庢潨鑾? -> 鎵惧埌 4936 寮犲崱鐗?
+   鏈€浣冲尮閰嶏細BT24-001銈偖銉兂
+
+=== 娴嬭瘯鍗＄墝缂栧彿鎼滅储锛堟爣鍑嗗寲锛?===
+Loaded 10135 cards
+Created card_no index: 6185 entries
+Created card_name index: 20487 keywords
+Loaded 4636 rulings
+Created ruling index: 12767 keywords
+Loaded rules (55635 chars)
+Created rule section index: 158 sections
+Loaded 2318 term entries
+Loaded 1052 name variants and 955 JP鈫扖N mappings
+Data loading and indexing completed in 0.57s
+[PASS] ['EX08-074', 'EX8-074', 'ex08-074'] -> 杩斿洖鐩稿悓鍗＄墝锛氫腑涓栫邯鍏埖鍏?
+[PASS] ['BT01-001', 'BT1-001', 'bt01-001'] -> 杩斿洖鐩稿悓鍗＄墝锛氭瘮楂樺吔
+[WARN] ['ST01-001', 'ST1-001'] -> 閮芥湭鎵惧埌鍗＄墝
+
+=== 娴嬭瘯鎬ц兘 ===
+Loaded 10135 cards
+Created card_no index: 6185 entries
+Created card_name index: 20487 keywords
+Loaded 4636 rulings
+Created ruling index: 12767 keywords
+Loaded rules (55635 chars)
+Created rule section index: 158 sections
+Loaded 2318 term entries
+Loaded 1052 name variants and 955 JP鈫扖N mappings
+Data loading and indexing completed in 0.57s
+绮剧‘鏌ヨ (100 娆?: 0.29ms (骞冲潎 0.00ms/娆?
+妯＄硦鏌ヨ (10 娆?: 53.95ms (骞冲潎 5.40ms/娆?
+[PASS] 绮剧‘鏌ヨ鎬ц兘鑹ソ
+[PASS] 妯＄硦鏌ヨ鎬ц兘鍙帴鍙?
+
+============================================================
+娴嬭瘯鎬荤粨
+============================================================
+[PASS] - 鍗＄墝缂栧彿鏍囧噯鍖?
+[PASS] - 鍙樹綋鏄犲皠鍔犺浇
+[PASS] - 绮剧‘鍚嶇О鎼滅储
+[FAIL] - 鍙樹綋鍚嶇О鎼滅储
+[PASS] - 妯＄硦鐩镐技搴︽悳绱?
+[PASS] - 缂栧彿鎼滅储鏍囧噯鍖?
+
+鎬昏锛?/6 娴嬭瘯閫氳繃
