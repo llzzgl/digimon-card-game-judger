@@ -26,3 +26,7 @@ sentence-transformers==2.7.0
 # Utils
 python-dotenv==1.0.1
 pydantic>=2.9.0
+
+# Image Processing (图片识别功能)
+Pillow>=10.0.0
+# easyocr>=1.7.0  # OCR 识别 (可选，如需使用请取消注释)

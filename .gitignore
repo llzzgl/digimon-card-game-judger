@@ -16,6 +16,8 @@ build/
 test.jpg
 test_*.py
 *_test.py
+test_*.json
+test_*.txt
 test_output/
 *.log
 
@@ -23,7 +25,11 @@ test_output/
 debug_*.py
 temp_*.py
 *_debug.py
+check_*.py
+fix_*.py
+verify_*.py
 page_source.html
+*.html
 
 ## 临时报告
 PROGRESS_ALERT_*.md
@@ -31,20 +37,42 @@ PROGRESS_REPORT_*.md
 TEST_REPORT_*.md
 URGENT_*.md
 *_REPORT_*.md
+*_SUMMARY.md
+*_COMPLETE_REPORT.md
+TASK_*_COMPLETION_REPORT.md
+INTEGRATION_SUMMARY.md
+JUDGE_INTEGRATION_COMPLETE.md
+METADATA_AND_RECOGNITION_PROGRESS.md
+FULL_IMAGE_CRAWL_AND_MULTIMODAL_PLAN.md
+CRON_*_REPORT.md
 
 ## 数据库
 *.db
 *.db-journal
+*.sqlite3
+*.bin
+*.pickle
 
 ## 图片缓存
 card_data/images/jp/raw/*.jpg
 card_data/images/cn/raw/*.jpg
+card_data/images/cn/raw/*.png
+card_data/images/jp/raw/*.png
 card_data/images/cn/backup*/
 card_data/images/jp/backup*/
+card_data/images/cn/debug_*.html
+card_data/images/cn/page_after_switch.html
+card_data/images/cn/test_*.html
+card_data/images/VALIDATION_*.md
 
 ## 技能验证
 scraper_skill_validation/
 translation_skill_validation/
+
+## 数据目录
+data/
+card_game_judge/data/
+card_game_judge/.env
 
 ## 其他临时文件
 *.tmp
@@ -52,6 +80,7 @@ translation_skill_validation/
 *.swp
 .DS_Store
 Thumbs.db
+*v*.txt
 
 ## 保留重要报告
 !COMPREHENSIVE_TEST_REPORT*.md

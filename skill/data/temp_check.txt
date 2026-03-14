@@ -1,0 +1,14 @@
+﻿python : Traceback (most recent call last):
+所在位置 行:1 字符: 42
++ ... skill\data; python -c "import json; d=json.load(open('cards.json'));  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<string>", line 1, in <module>
+    import json; d=json.load(open('cards.json')); print([c for c in d if '074' in c.get('card_no','')][:3])
+                   ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+                 ~~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0xae in position 64: illegal multibyte sequence

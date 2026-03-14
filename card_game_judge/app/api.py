@@ -37,7 +37,11 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 @app.get("/", include_in_schema=False)
 async def index():
-    """返回前端页面"""
+    """返回前端页面 (增强版，支持图片识别)"""
+    # 优先使用增强版页面
+    enhanced_page = os.path.join(STATIC_DIR, "index_with_image.html")
+    if os.path.exists(enhanced_page):
+        return FileResponse(enhanced_page)
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
@@ -390,4 +394,138 @@ async def get_memory_stats():
     """获取记忆系统统计信息"""
     stats = memory_manager.get_statistics()
     return {"status": "success", "data": stats}
+
+
+# ==================== 图片识别 API ====================
+
+@app.post("/image/recognize", summary="识别卡牌图片")
+async def recognize_card_image(
+    file: UploadFile = File(...),
+    detailed: bool = Form(False)
+):
+    """
+    识别上传的卡牌图片
+    
+    - file: 卡牌图片文件 (JPG/PNG)
+    - detailed: 是否返回详细分析
+    
+    返回:
+    - card_number: 卡牌编号
+    - card_name: 卡牌名称
+    - confidence: 置信度
+    - analysis: 分析结果
+    """
+    try:
+        from judge_integration import CardImageRecognizer
+        
+        # 读取图片
+        image_data = await file.read()
+        
+        # 创建识别器并识别
+        recognizer = CardImageRecognizer()
+        result = recognizer.recognize_card(image_data)
+        
+        return {
+            "status": "success",
+            "data": result
+        }
+        
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"识别失败：{str(e)}\n{traceback.format_exc()}"
+        )
+
+
+@app.post("/image/query", summary="图片 + 文字混合询问")
+async def image_query(
+    file: UploadFile = File(...),
+    question: Optional[str] = Form(None),
+    top_k: int = Form(5)
+):
+    """
+    上传卡牌图片并进行询问
+    
+    - file: 卡牌图片文件
+    - question: 文字问题 (可选，如不提供则自动分析)
+    - top_k: 检索的参考文档数量
+    
+    返回:
+    - recognition: 图片识别结果
+    - answer: 裁定回答
+    - sources: 参考来源
+    """
+    try:
+        from judge_integration import JudgeIntegrationService
+        
+        # 读取图片
+        image_data = await file.read()
+        
+        # 创建集成服务并处理
+        service = JudgeIntegrationService()
+        result = service.process_image_query(image_data, question)
+        
+        if result.get("error"):
+            raise HTTPException(status_code=500, detail=result["error"])
+        
+        return {
+            "status": "success",
+            "data": {
+                "recognition": result["recognition"],
+                "answer": result["answer"],
+                "sources": result["sources"]
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"处理失败：{str(e)}\n{traceback.format_exc()}"
+        )
+
+
+@app.post("/image/batch-recognize", summary="批量识别多张卡牌图片")
+async def batch_recognize_cards(
+    files: List[UploadFile] = File(...),
+):
+    """
+    批量识别多张卡牌图片
+    
+    - files: 多张卡牌图片文件
+    
+    返回:
+    - results: 每张卡牌的识别结果列表
+    """
+    try:
+        from judge_integration import CardImageRecognizer
+        
+        recognizer = CardImageRecognizer()
+        results = []
+        
+        for file in files:
+            image_data = await file.read()
+            result = recognizer.recognize_card(image_data)
+            results.append({
+                "filename": file.filename,
+                "recognition": result
+            })
+        
+        return {
+            "status": "success",
+            "data": {
+                "total": len(results),
+                "results": results
+            }
+        }
+        
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"批量识别失败：{str(e)}\n{traceback.format_exc()}"
+        )
 
