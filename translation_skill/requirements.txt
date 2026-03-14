@@ -1,0 +1,17 @@
+# DTCG Translation Skill Dependencies
+
+# LLM SDK
+openai>=1.0.0
+google-generativeai>=0.3.0
+
+# PDF Processing
+pypdf>=3.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# HTTP Client (proxy support)
+httpx>=0.24.0
+
+# Testing (optional)
+pytest>=7.0.0

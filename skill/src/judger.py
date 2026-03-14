@@ -118,9 +118,8 @@ class DTCGJudger:
                     self.card_no_index[card_no_normalized] = card
             print(f"Created card_no index: {len(self.card_no_index)} entries")
             
-            # 构建卡牌名称索引（倒排索引 - 优化版）
+            # 构建卡牌名称索引（倒排索引 - 修复版）
             self.card_name_index = {}
-            seen_cards = set()  # 用于快速检查卡牌是否已添加
             
             for card in self.cards:
                 card_id = card.get('card_no', id(card))
@@ -129,14 +128,13 @@ class DTCGJudger:
                     name = card.get(lang, '').lower()
                     if name:
                         keywords = self._extract_keywords(name)
+                        
                         for kw in keywords:
                             if kw not in self.card_name_index:
                                 self.card_name_index[kw] = []
                             
-                            # 优化：使用 card_id 避免重复添加同一卡牌
-                            if card_id not in seen_cards:
-                                self.card_name_index[kw].append(card)
-                                seen_cards.add(card_id)
+                            # 添加卡牌到索引（无需去重，因为同一卡牌的同一关键词只会出现一次）
+                            self.card_name_index[kw].append(card)
             
             print(f"Created card_name index: {len(self.card_name_index)} keywords")
         
@@ -198,7 +196,8 @@ class DTCGJudger:
         if aliases_file.exists():
             with open(aliases_file, 'r', encoding='utf-8') as f:
                 self.name_aliases = json.load(f)
-            self.name_variants = self.name_aliases.get('variants', {})
+            # Lowercase all variant keys for case-insensitive matching
+            self.name_variants = {k.lower(): v for k, v in self.name_aliases.get('variants', {}).items()}
             self.jp_to_cn_map = self.name_aliases.get('jp_to_cn', {})
             # 构建反向映射：中文→日文
             self.cn_to_jp_map = {v: k for k, v in self.jp_to_cn_map.items()}

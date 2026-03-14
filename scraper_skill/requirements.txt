@@ -1,0 +1,25 @@
+# DTCG Scraper Skill Dependencies
+# 复用原有爬虫依赖，无需额外安装
+
+# 核心依赖
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
+# HTTP 请求
+requests>=2.31.0
+
+# HTML 解析
+beautifulsoup4>=4.12.0
+
+# 数据处理（Python 标准库已包含）
+# json
+# dataclasses
+# pathlib
+# logging
+# datetime
+
+# 可选：进度条
+# tqdm>=4.66.0
+
+# 可选：HTTP 重试
+# urllib3>=2.1.0
