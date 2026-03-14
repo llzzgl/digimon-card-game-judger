@@ -12,6 +12,15 @@ venv/
 dist/
 build/
 
+## 敏感信息（最优先）
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+credentials/
+
 ## 测试文件
 test.jpg
 test_*.py
@@ -80,7 +89,11 @@ translation_skill_validation/
 ## 数据目录
 data/
 card_game_judge/data/
-card_game_judge/.env
+
+## .env 文件（所有目录）
+**/.env
+**/.env.*
+!*.env.example
 
 ## 其他临时文件
 *.tmp
